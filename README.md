@@ -41,6 +41,6 @@ Para correr o [notebook](pynetlogo_ku.ipynb), há várias opções:
 Também é necessário [instalar o Python](https://www.python.org/downloads/) (foi utilizada a versão 3.10.4, em princípio
 a partir da versão 3.8 funciona) e adicionar o endereço da instalação do NetLogo às Variáveis de Ambiente da máquina.
 
-## Video
+## Demonstração Video
 
-[![video](thumbnail.png)](youtube link)
+[![Demonstração](https://i9.ytimg.com/vi_webp/0aawaW1K_t8/mqdefault.webp?v=62655fb3&sqp=CKjjlZMG&rs=AOn4CLCHK7_oIc8Q2yOOSKfxTLzwnzMH7Q)](https://youtu.be/0aawaW1K_t8)
