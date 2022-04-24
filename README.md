@@ -1,4 +1,8 @@
-# TFC-21906966
+# DEISI258 - Modelamento multi-agente de interações em grupos sociais
+
+Aluno: Paulo Pinto a21906966 
+
+Orientador: Manuel Marques Pita
 
 Para esta entrega, há duas componentes:
   - A simulação desenvolvida em NetLogo
