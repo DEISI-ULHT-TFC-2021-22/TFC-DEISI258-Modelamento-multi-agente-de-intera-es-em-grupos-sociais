@@ -67,6 +67,8 @@ to setup-board
 
     ;; visualize links
     create-links-with other agents
+
+    type "KU(s) on Board " print first board_history
   ]
 
 end
@@ -169,19 +171,6 @@ to show-board-vars
   ]
 end
 
-to compats
-  let string 0.0
-
-  ask boards[
-    foreach all_compatibilities [ c ->
-      ;; type c print ","
-      set string (sentence string c)
-    ]
-  ]
-  show string
-  ;; report string
-end
-
 to-report compats-report
   let string 0.0
 
@@ -192,11 +181,7 @@ to-report compats-report
     ]
   ]
   report string
-  ;; report string
 end
-
-
-
 
 to random-walk
   let ts sort agents
