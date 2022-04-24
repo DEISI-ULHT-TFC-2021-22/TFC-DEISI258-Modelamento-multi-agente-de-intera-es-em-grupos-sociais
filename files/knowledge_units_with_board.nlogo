@@ -39,6 +39,7 @@ to setup
     type [who] of x type " links : " print [list_of_links] of x
     type "\n"
   ]
+
   setup-board
 
   reset-ticks
@@ -63,7 +64,11 @@ to setup-board
 
     set all_compatibilities []
     set compatibilities []
+
+    ;; visualize links
+    create-links-with other agents
   ]
+
 end
 
 to setup-agents
@@ -127,8 +132,8 @@ to update-board-vars
     ] [
       ;; duplicate last
       set board_history lput (last board_history) board_history
-      show-board-vars
-      print "CURR _ BOARD WAS EMPTY"
+      ;; show-board-vars
+      ;; print "CURR _ BOARD WAS EMPTY"
     ]
 
     ;; reset current list
@@ -507,7 +512,7 @@ ku_number
 ku_number
 0
 60
-12.0
+9.0
 3
 1
 NIL
@@ -574,10 +579,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-66
-352
-137
-385
+69
+291
+140
+324
 NIL
 go-500
 T
