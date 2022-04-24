@@ -2,11 +2,12 @@
 
 Para esta entrega, há duas componentes:
   - A simulação desenvolvida em NetLogo
-  - (Novo) O conector em Python
+  - O conector em Python (Novo)
 
 ## NetLogo
 
-Para esta entrega, a simulação foi alterada de modo a que os agentes passassem a interagir com uma *board* central, em vez de entre si.
+A simulação foi alterada de modo a que os agentes passassem a interagir com uma *board* central, em vez de entre si.
+
 A interação funciona da seguinte maneira:
   1. A board é inicializada com uma *Knowledge Unit* - KU
   2. Os agentes trocam o foco (como faziam anteriormente)
