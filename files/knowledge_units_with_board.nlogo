@@ -1,3 +1,5 @@
+extensions [table]
+
 globals [
 ]
 
@@ -17,14 +19,23 @@ boards-own [
 
 agents-own [ ;; KU
   kus ;; ( 0..255 )
-  list_of_links ;; list of links
+  list_of_links
   prob_exploit ;; exploration vs exploitation
   focused_ku
+
+  ;; individual vars
+  gender
+  class
 ]
 
 to setup
   clear-all
   random-seed 250474
+
+  setup-exploit-table
+
+  let male_exploit 0.5
+  let female_exploit 0.1
 
   if ku_number > (2 ^ ku_len) [
     error "ERROR: TOO MANY KNOWLEDGE UNITS, CAN'T BE UNIQUE"
@@ -37,13 +48,36 @@ to setup
   foreach y [ x ->
     type [who] of x type " unique KUs : " print sort [kus] of x
     type [who] of x type " links : " print [list_of_links] of x
-    type "\n"
+    type [gender] of x type "\n"
   ]
+  show-mf-ratio
 
   setup-board
 
   reset-ticks
   ;; go
+end
+
+to setup-exploit-table
+  let exploit_table table:make
+
+  let genders ["male" "female" "other"]
+  let classes ["high" "medium" "low"]
+  let value 0.1
+
+  foreach genders [ g ->
+    foreach classes [ c ->
+      table:put exploit_table ( word g " " c ) value
+    ]
+  ]
+
+  table:put exploit_table "male medium" 0.5
+  table:put exploit_table "female medium" 0.1
+
+  ;type"\n\nEXPLOIT TABE L " print exploit_table
+  foreach table:keys exploit_table [ it ->
+    type it type " -> " print table:get exploit_table it
+  ]
 end
 
 to setup-board
@@ -64,13 +98,7 @@ to setup-board
 
     set all_compatibilities []
     set compatibilities []
-
-    ;; visualize links
-    create-links-with other agents
-
-    type "KU(s) on Board " print first board_history
   ]
-
 end
 
 to setup-agents
@@ -103,8 +131,47 @@ to setup-agents
 
     ;; focus on a random KU
     set focused_ku one-of kus
+
+    ;; individual vars
+    if-else males = 0 and females = 0 [
+      error "ERROR: 0:0 Male Female Ratio"
+      stop
+    ][
+      let ratio (males / (males + females))
+      if-else random-float 1 < ratio [
+        set gender "m"
+      ][
+        set gender "f"
+      ]
+    ]
+
+    if-else gender = "m" [
+      set prob_exploit male_prob_exploit
+      ; TODO : need to get value table of exploit probabilties
+    ][
+      set prob_exploit female_prob_exploit
+    ]
   ]
 end
+
+to show-mf-ratio
+  let ts sort agents
+
+  let f 0
+  let m 0
+
+  ;; random-walk for every agent
+  foreach ts [ agent ->
+    if-else [gender] of agent = "f" [
+      set f (f + 1)
+    ][
+      set m (m + 1)
+    ]
+  ]
+
+  type "\nRATIO\nF - " type f type " | M - " print m
+end
+
 
 to go
   tick
@@ -134,8 +201,8 @@ to update-board-vars
     ] [
       ;; duplicate last
       set board_history lput (last board_history) board_history
-      ;; show-board-vars
-      ;; print "CURR _ BOARD WAS EMPTY"
+      show-board-vars
+      print "CURR _ BOARD WAS EMPTY"
     ]
 
     ;; reset current list
@@ -169,6 +236,19 @@ to show-board-vars
 
     type "All compats : " print all_compatibilities
   ]
+end
+
+to compats
+  let string 0.0
+
+  ask boards[
+    foreach all_compatibilities [ c ->
+      ;; type c print ","
+      set string (sentence string c)
+    ]
+  ]
+  show string
+  ;; report string
 end
 
 to-report compats-report
@@ -207,7 +287,6 @@ to random-walk
   update-board-vars
 end
 
-;; TODO : insert-item and item can be first and last.....
 to add-to-board [agent]
 
   ask boards [
@@ -222,7 +301,7 @@ to add-to-board [agent]
 
       ;; type "focused ku " print [focused_ku] of agent
 
-      if compat > c_threshold [
+      if-else compat > c_threshold [
         ;; add to board
         if not member? [focused_ku] of agent curr_board [
 
@@ -237,6 +316,8 @@ to add-to-board [agent]
         ]
 
         ;; TODO : send to python
+      ][
+        ; if rude -> send anyway
       ]
 
       ;; update current board
@@ -428,13 +509,13 @@ end
 ;; ( first / last ) list
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-647
-448
+323
+12
+618
+308
 -1
 -1
-13.0
+8.7
 1
 10
 1
@@ -497,7 +578,7 @@ ku_number
 ku_number
 0
 60
-9.0
+12.0
 3
 1
 NIL
@@ -534,10 +615,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-17
-242
-189
-275
+44
+407
+216
+440
 probability_exploit
 probability_exploit
 0
@@ -564,10 +645,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-69
-291
-140
-324
+215
+19
+286
+52
 NIL
 go-500
 T
@@ -579,6 +660,66 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+22
+312
+114
+345
+males
+males
+0
+5
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+21
+270
+113
+303
+females
+females
+0
+5
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+130
+316
+316
+349
+male_prob_exploit
+male_prob_exploit
+0
+1
+0.5
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+131
+272
+314
+305
+female_prob_exploit
+female_prob_exploit
+0
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
