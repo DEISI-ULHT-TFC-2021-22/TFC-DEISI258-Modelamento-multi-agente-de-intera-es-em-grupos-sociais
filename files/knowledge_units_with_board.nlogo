@@ -15,6 +15,10 @@ boards-own [
 
   all_compatibilities
   compatibilities
+
+  male_participation
+  female_participation
+
 ]
 
 agents-own [ ;; KU
@@ -34,8 +38,8 @@ to setup
 
   setup-exploit-table
 
-  let male_exploit 0.5
-  let female_exploit 0.1
+  let male_exploit male_prob_exploit
+  let female_exploit female_prob_exploit
 
   if ku_number > (2 ^ ku_len) [
     error "ERROR: TOO MANY KNOWLEDGE UNITS, CAN'T BE UNIQUE"
@@ -98,8 +102,26 @@ to setup-board
 
     set all_compatibilities []
     set compatibilities []
+
+    create-links-with other agents [
+      set thickness 0.3
+    ]
+    color-links
   ]
 end
+
+to color-links
+  ask links
+  [
+    ifelse [gender] of end1 = "m" [
+      set color yellow       ;; both members are incumbents
+    ]
+    [
+      set color red            ;; members are previous collaborators
+    ]
+  ]
+end
+
 
 to setup-agents
   create-agents number_of_agents
@@ -108,7 +130,7 @@ to setup-agents
     set color red
     set size 2
     setxy random-xcor random-ycor
-    set label ([who] of self)
+    ; set label ([who] of self)
 
     set prob_exploit probability_exploit
     set kus []
@@ -151,6 +173,8 @@ to setup-agents
     ][
       set prob_exploit female_prob_exploit
     ]
+
+    set label ([gender] of self)
   ]
 end
 
@@ -169,9 +193,8 @@ to show-mf-ratio
     ]
   ]
 
-  type "\nRATIO\nF - " type f type " | M - " print m
+  type "\nMF RATIO -> F - " type f type " | M - " print m
 end
-
 
 to go
   tick
@@ -216,15 +239,38 @@ to update-board-vars
     ;; agents_history stores a list per tick of the compatible agents
     set agents_history lput curr_agents agents_history
 
+    set male_participation 0
+    set female_participation 0
+
+    foreach curr_agents [ agent_number ->
+      let a get-agent-from-who agent_number
+      ifelse [gender] of a = "m" [
+        set male_participation male_participation + 1
+      ][
+        set female_participation female_participation + 1
+      ]
+    ]
+
     ;; type "Curr agents : " print curr_agents
     ;; type "All agents  : " print agents_history
 
-    ;; compatabilities
+    ;; compatibilities
     set all_compatibilities lput sort compatibilities all_compatibilities
     ;; type "compats " print all_compatibilities
+
     set compatibilities []
   ]
   ;; show-board-vars
+end
+
+to-report get-agent-from-who [agent_number]
+  let agent-to-report 0
+  ask agents [
+    if agent_number = who [
+      set agent-to-report self
+    ]
+  ]
+  report agent-to-report
 end
 
 to show-board-vars
@@ -238,19 +284,7 @@ to show-board-vars
   ]
 end
 
-to compats
-  let string 0.0
-
-  ask boards[
-    foreach all_compatibilities [ c ->
-      ;; type c print ","
-      set string (sentence string c)
-    ]
-  ]
-  show string
-  ;; report string
-end
-
+; compats was this without report
 to-report compats-report
   let string 0.0
 
@@ -529,8 +563,8 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -615,10 +649,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-44
-407
-216
-440
+47
+370
+219
+403
 probability_exploit
 probability_exploit
 0
@@ -685,7 +719,7 @@ females
 females
 0
 5
-1.0
+3.0
 1
 1
 NIL
@@ -700,7 +734,7 @@ male_prob_exploit
 male_prob_exploit
 0
 1
-0.5
+0.1
 0.05
 1
 NIL
@@ -715,11 +749,50 @@ female_prob_exploit
 female_prob_exploit
 0
 1
-0.1
+0.5
 0.05
 1
 NIL
 HORIZONTAL
+
+PLOT
+27
+414
+324
+564
+Average Compatibility / Tick
+tick
+avg compat
+0.0
+550.0
+0.0
+1.0
+true
+true
+"" ""
+PENS
+"mean" 1.0 0 -16777216 true "" "plot mean last [all_compatibilities] of one-of boards"
+"max" 1.0 2 -2674135 true "" "plot max last [all_compatibilities] of one-of boards"
+"min" 1.0 2 -8330359 true "" "plot min last [all_compatibilities] of one-of boards"
+
+PLOT
+345
+391
+656
+541
+M / F participation
+tick
+gender
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"male" 1.0 0 -4079321 true "" "plot [male_participation] of one-of boards"
+"female" 1.0 0 -5298144 true "" "plot [female_participation] of one-of boards"
 
 @#$#@#$#@
 ## WHAT IS IT?
