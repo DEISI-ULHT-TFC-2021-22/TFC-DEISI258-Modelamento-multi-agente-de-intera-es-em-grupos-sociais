@@ -1,6 +1,12 @@
 extensions [table]
 
 globals [
+  mf_ratio
+  explore_trend
+  exploit_trend
+  attention_norm
+  first_ku
+  divergencies
 ]
 
 breed [boards board]
@@ -18,7 +24,6 @@ boards-own [
 
   male_participation
   female_participation
-
 ]
 
 agents-own [ ;; KU
@@ -34,12 +39,15 @@ agents-own [ ;; KU
 
 to setup
   clear-all
-  random-seed 250474
+  ;random-seed 250474
 
-  setup-exploit-table
+  set first_ku 255 ; 0000 0000 1111 1111
+
+  ;setup-exploit-table
 
   let male_exploit male_prob_exploit
   let female_exploit female_prob_exploit
+  set mf_ratio (males / (males + females))
 
   if ku_number > (2 ^ ku_len) [
     error "ERROR: TOO MANY KNOWLEDGE UNITS, CAN'T BE UNIQUE"
@@ -47,6 +55,7 @@ to setup
   ]
 
   setup-agents
+  layout-circle agents 12
 
   let y sort agents
   foreach y [ x ->
@@ -62,33 +71,33 @@ to setup
   ;; go
 end
 
-to setup-exploit-table
-  let exploit_table table:make
-
-  let genders ["male" "female" "other"]
-  let classes ["high" "medium" "low"]
-  let value 0.1
-
-  foreach genders [ g ->
-    foreach classes [ c ->
-      table:put exploit_table ( word g " " c ) value
-    ]
-  ]
-
-  table:put exploit_table "male medium" 0.5
-  table:put exploit_table "female medium" 0.1
-
+;to setup-exploit-table
+;  let exploit_table table:make
+;
+;  let genders ["male" "female" "other"]
+;  let classes ["high" "medium" "low"]
+;  let value 0.1
+;
+;  foreach genders [ g ->
+;    foreach classes [ c ->
+;      table:put exploit_table ( word g " " c ) value
+;    ]
+;  ]
+;
+;  table:put exploit_table "male medium" 0.5
+;  table:put exploit_table "female medium" 0.1
+;
   ;type"\n\nEXPLOIT TABE L " print exploit_table
-  foreach table:keys exploit_table [ it ->
-    type it type " -> " print table:get exploit_table it
-  ]
-end
+;  foreach table:keys exploit_table [ it ->
+;    type it type " -> " print table:get exploit_table it
+;  ]
+;end
 
 to setup-board
   create-boards 1
   [
     set shape "star"
-    set color blue
+    set color yellow
     set size 5
     set label "board"
 
@@ -97,7 +106,8 @@ to setup-board
     set curr_agents []
 
     ;; add first ku to board
-    set board_history lput (insert-item 0 [] random (2 ^ ku_len)) []
+    ;set board_history lput (insert-item 0 [] random (2 ^ ku_len)) []
+    set board_history lput (insert-item 0 [] first_ku) []
     set curr_board []
 
     set all_compatibilities []
@@ -114,42 +124,63 @@ to color-links
   ask links
   [
     ifelse [gender] of end1 = "m" [
-      set color yellow       ;; both members are incumbents
+      set color yellow
     ]
     [
-      set color red            ;; members are previous collaborators
+      set color red
     ]
   ]
 end
 
-
 to setup-agents
+  let agent_ctr number_of_agents
   create-agents number_of_agents
   [
     set shape "circle"
-    set color red
+    set color violet
     set size 2
-    setxy random-xcor random-ycor
     ; set label ([who] of self)
-
-    set prob_exploit probability_exploit
     set kus []
 
+    ; 16 compat em 60  test
+    ; 40 compat em 150 simulate
+    let compat_kus_ctr 16
+    let incompat_kus_ctr (ku_number - compat_kus_ctr)
+
+    let ku_ctr ku_number
     ;; generate ku_number of kus
     repeat ku_number [
       let this_ku random (2 ^ ku_len)
 
       ;; check if any agent already has this value as its content
-      while [member? this_ku kus]
+      while [(member? this_ku kus)
+        or ((get-compat-as-decimal this_ku first_ku) >  c_threshold and compat_kus_ctr = 0)
+        or ((get-compat-as-decimal this_ku first_ku) <= c_threshold and incompat_kus_ctr = 0)
+        ]
       [
         set this_ku random (2 ^ ku_len)
       ]
-      set kus lput this_ku kus
-    ]
 
+      if-else (get-compat-as-decimal this_ku first_ku) > c_threshold [
+        set compat_kus_ctr (compat_kus_ctr - 1)
+      ] [
+        set incompat_kus_ctr (incompat_kus_ctr - 1)
+      ]
+
+      set kus lput this_ku kus
+
+      ; type "Compat left -> " print compat_kus_ctr
+      ; type "Incompat left -> " print incompat_kus_ctr
+
+      set ku_ctr ku_ctr - 1
+     ]
+
+    print "Bottleneck !!!"
     ;; initiate list of links
     set list_of_links []
     set list_of_links set_links self
+
+    print "finished list of links"
 
     ;; focus on a random KU
     set focused_ku one-of kus
@@ -159,11 +190,12 @@ to setup-agents
       error "ERROR: 0:0 Male Female Ratio"
       stop
     ][
-      let ratio (males / (males + females))
-      if-else random-float 1 < ratio [
+      if-else random-float 1 < mf_ratio[
         set gender "m"
+        set label "♂"
       ][
         set gender "f"
+        set label "♀"
       ]
     ]
 
@@ -174,13 +206,23 @@ to setup-agents
       set prob_exploit female_prob_exploit
     ]
 
-    set label ([gender] of self)
+    set agent_ctr agent_ctr - 1
+    type agent_ctr print " agents left"
   ]
 end
 
 to show-mf-ratio
+  let gender-counts get-gender-count
+  let f first gender-counts
+  let m last gender-counts
+
+  type "\nMF RATIO -> F - " type f type " | M - " print m
+end
+
+to-report get-gender-count
   let ts sort agents
 
+  let counts []
   let f 0
   let m 0
 
@@ -192,8 +234,9 @@ to show-mf-ratio
       set m (m + 1)
     ]
   ]
-
-  type "\nMF RATIO -> F - " type f type " | M - " print m
+  set counts lput f counts
+  set counts lput m counts
+  report counts
 end
 
 to go
@@ -202,8 +245,8 @@ to go
   ;; add-to-board
 end
 
-to go-500
-  if-else ticks < 500 [
+to go-200
+  if-else ticks < 200 [
     tick
     random-walk
   ] [
@@ -300,21 +343,51 @@ end
 to random-walk
   let ts sort agents
 
-  ;; random-walk for every agent
+  let male_exploit_ctr 0
+  let female_exploit_ctr 0
+
+  set divergencies []
+
   foreach ts [ agent ->
-    ;; type "\n" type agent type "\n" print [list_of_links] of agent
-    ;; type "\n" type agent
     ;; change focused ku
     ifelse random-float 1 < [prob_exploit] of agent
     [
-      ;; type " is exploiting KU " print [focused_ku] of agent
+      ; type [gender] of agent type " is exploiting KU " print [focused_ku] of agent
       exploit agent
+      if-else [gender] of agent = "m" [
+        set male_exploit_ctr male_exploit_ctr + 1
+      ][
+        set female_exploit_ctr female_exploit_ctr + 1
+      ]
     ]
     [
-      ;; type " is exploring KU " print [focused_ku] of agent
+      ; type " is exploring KU " print [focused_ku] of agent
       explore agent
     ]
+  ]
 
+  ; type male_exploit_ctr print " Males Exploiting"
+  ; type female_exploit_ctr print " Females Exploiting"
+
+  let gender_counts get-gender-count
+  let f first gender_counts
+  let m last gender_counts
+
+  if Method = "Attention Norm - General" [
+    ; sum agents exploiting / sum all agents
+    set exploit_trend (male_exploit_ctr + female_exploit_ctr) / (f + m)
+    set explore_trend 1 - exploit_trend
+
+    ; type "Trends : Exploit " type precision exploit_trend 2 type " Explore " print precision explore_trend 2
+
+    if-else exploit_trend > explore_trend
+    [ set attention_norm "exploit" ]
+    [ set attention_norm "explore" ]
+
+    ; type "Attention norm is - to " print attention_norm
+  ]
+
+  foreach ts [agent ->
     add-to-board agent
   ]
 
@@ -326,42 +399,62 @@ to add-to-board [agent]
   ask boards [
     ;; type " history " print board_history
 
-    ;; board that agents are checking
+    ; get last board's kus
     foreach last board_history [ ku_on_board ->
-      ;; type "ku on b " print ku_on_board
-      let compat decimal_compatibility [focused_ku] of agent ku_on_board
+      ; calc compat focused_ku x ku_on_board
+      let compat get-compat-as-decimal [focused_ku] of agent ku_on_board
 
+      ; add compat to list of compatibilities
       set compatibilities lput compat compatibilities
 
-      ;; type "focused ku " print [focused_ku] of agent
+      if Method = "Compatibility"[
+        if compat > c_threshold [
+          ; add focused_ku if not there
+          if not member? [focused_ku] of agent curr_board [
+            ; add compatible ku to current board
+            set curr_board lput [focused_ku] of agent curr_board
 
-      if-else compat > c_threshold [
-        ;; add to board
-        if not member? [focused_ku] of agent curr_board [
+            ; add agent to current connected agents
+            set curr_agents lput [who] of agent curr_agents
 
-          ;; type "\nAdding " type [focused_ku] of agent type " to burst, "
-          ;; type compat type "% compatible with " type ku_on_board print " on board"
-
-          ;; add ku to current board
-          set curr_board lput [focused_ku] of agent curr_board
-
-          ;; add agent to current connected agents
-          set curr_agents lput [who] of agent curr_agents
+            set divergencies lput (1 - (get-compat-as-decimal [focused_ku] of agent first_ku)) divergencies
+          ]
         ]
-
-        ;; TODO : send to python
-      ][
-        ; if rude -> send anyway
       ]
 
-      ;; update current board
+      if Method = "Attention Norm - General" [
+        ;type " Attention norm é general, não adicionou nada ainda"
+
+        ; calc % to commit
+        let rand random-float 1
+        let chance 0.2
+
+        if ((compat > c_threshold) and (attention_norm = "exploit"))
+        or ((compat <= c_threshold) and (attention_norm = "explore"))
+        [
+          set chance 0.8
+        ]
+        ; está bom. funciona
+        ;type "\ncompat " print compat
+        ;type "c_threshold " print c_threshold
+        ;type "attention_norm " print attention_norm
+        ;type "chance " print chance
+
+        if random-float 1 < chance [
+          ; add focused_ku if not there
+          if not member? [focused_ku] of agent curr_board [
+            ; add compatible ku to current board
+            set curr_board lput [focused_ku] of agent curr_board
+
+            ; add agent to current connected agents
+            set curr_agents lput [who] of agent curr_agents
+
+            set divergencies lput (1 - (get-compat-as-decimal [focused_ku] of agent first_ku)) divergencies
+          ]
+        ]
+      ]
+
       set curr_board remove-duplicates curr_board
-
-      ;; set board_history insert-item (length board_history) board_history curr_board
-      ;; TODO : try lput
-
-      ;;type "   history " print board_history type "   curr " print curr_board
-
     ]
 
     ;;type "KUs on Board:" print curr_board
@@ -380,7 +473,7 @@ to exploit [agent]
         let next_focused_ku abs(focused_ku - item 0 tuple - item 1 tuple)
 
         ;; compatibility
-        let compare_compat compatibility decimal-to-binary focused_ku decimal-to-binary next_focused_ku
+        let compare_compat get-compat-as-decimal focused_ku next_focused_ku
 
         ;; print
         ;; type self type " is now focusing on " type next_focused_ku
@@ -428,7 +521,7 @@ to explore [agent]
     let next_focused_ku one-of not_connected_kus
 
     ;; compatibility
-    let compare_compat compatibility decimal-to-binary focused_ku decimal-to-binary next_focused_ku
+    let compare_compat get-compat-as-decimal focused_ku next_focused_ku
 
     ;; print
     ;; type self type " is now focusing on " type next_focused_ku
@@ -437,52 +530,6 @@ to explore [agent]
     ;; switch focus
     set focused_ku next_focused_ku
   ]
-end
-
-to-report decimal-to-binary [n]
-  ;; array position
-  let pos 0
-  ;; current bit value
-  let bit 0
-  ;; all bits
-  let arr []
-
-  loop[
-    (
-      ;; if all positions of the array are filled
-      ifelse pos = ku_len [
-        report reverse arr ;; return
-      ]
-      ;; else
-      [
-        ;; get next bit
-        ifelse (remainder n 2) = 1
-        [
-          set bit 1
-        ]
-        [
-          set bit 0
-        ]
-        ;; add it to array
-        set arr insert-item pos arr bit
-        set pos pos + 1
-        ;; update n
-        set n floor(n / 2)
-      ]
-    )
-  ]
-end
-
-to-report normalized-hamming-distance [ bit_arr_1 bit_arr_2 ]
-  report (length remove true (map [[?1 ?2] -> ?1 = ?2] bit_arr_1 bit_arr_2)) / ku_len
-end
-
-to-report compatibility [ bit_arr_1 bit_arr_2 ]
-  report 1 - (normalized-hamming-distance bit_arr_1 bit_arr_2)
-end
-
-to-report decimal_compatibility [ dec1 dec2 ]
-  report 1 - (normalized-hamming-distance decimal-to-binary dec1 decimal-to-binary dec2)
 end
 
 to-report set_links [agent]
@@ -536,6 +583,54 @@ to-report create_link [ a b agent ] ;; 2 KUs/
   ]
 end
 
+;; HELPERS
+
+to-report decimal-to-binary [n]
+  ;; array position
+  let pos 0
+  ;; current bit value
+  let bit 0
+  ;; all bits
+  let arr []
+
+  loop[
+    (
+      ;; if all positions of the array are filled
+      ifelse pos = ku_len [
+        report reverse arr ;; return
+      ]
+      ;; else
+      [
+        ;; get next bit
+        ifelse (remainder n 2) = 1
+        [
+          set bit 1
+        ]
+        [
+          set bit 0
+        ]
+        ;; add it to array
+        set arr insert-item pos arr bit
+        set pos pos + 1
+        ;; update n
+        set n floor(n / 2)
+      ]
+    )
+  ]
+end
+
+to-report normalized-hamming-distance [ bit_arr_1 bit_arr_2 ]
+  report (length remove true (map [[?1 ?2] -> ?1 = ?2] bit_arr_1 bit_arr_2)) / ku_len
+end
+
+to-report compatibility [ bit_arr_1 bit_arr_2 ]
+  report 1 - (normalized-hamming-distance bit_arr_1 bit_arr_2)
+end
+
+to-report get-compat-as-decimal [ dec1 dec2 ]
+  report 1 - (normalized-hamming-distance decimal-to-binary dec1 decimal-to-binary dec2)
+end
+
 
 ;; insert-item pos list item
 ;; lput item list (insert in last)
@@ -543,13 +638,13 @@ end
 ;; ( first / last ) list
 @#$#@#$#@
 GRAPHICS-WINDOW
-323
-12
-618
-308
+10
+58
+233
+282
 -1
 -1
-8.7
+6.52
 1
 10
 1
@@ -570,10 +665,10 @@ ticks
 30.0
 
 BUTTON
-26
-15
-89
-48
+10
+18
+73
+51
 NIL
 setup\n
 NIL
@@ -587,10 +682,10 @@ NIL
 1
 
 BUTTON
-118
-14
-181
-47
+81
+19
+144
+52
 NIL
 go\n
 NIL
@@ -604,40 +699,40 @@ NIL
 1
 
 SLIDER
-17
-111
-189
-144
+18
+446
+177
+479
 ku_number
 ku_number
 0
-60
-12.0
-3
+250
+60.0
+10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-17
-154
-189
-187
+18
+489
+177
+522
 ku_len
 ku_len
 0
-20
-8.0
+32
+16.0
 2
 1
 NIL
 HORIZONTAL
 
 SLIDER
-17
-197
-189
-230
+18
+532
+177
+565
 c_threshold
 c_threshold
 0
@@ -649,42 +744,27 @@ NIL
 HORIZONTAL
 
 SLIDER
-47
-370
-219
+18
 403
-probability_exploit
-probability_exploit
-0
-1
-0.5
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-17
-68
-189
-101
+177
+436
 number_of_agents
 number_of_agents
 1
-20
-6.0
-1
+33
+9.0
+2
 1
 NIL
 HORIZONTAL
 
 BUTTON
-215
+153
 19
-286
+235
 52
 NIL
-go-500
+go-200
 T
 1
 T
@@ -696,10 +776,10 @@ NIL
 1
 
 SLIDER
-22
-312
-114
-345
+188
+531
+280
+564
 males
 males
 0
@@ -711,88 +791,135 @@ NIL
 HORIZONTAL
 
 SLIDER
-21
-270
-113
-303
+188
+491
+280
+524
 females
 females
 0
 5
-3.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-130
-316
-316
-349
+287
+531
+473
+564
 male_prob_exploit
 male_prob_exploit
 0
 1
-0.1
+0.2
 0.05
 1
 NIL
 HORIZONTAL
 
 SLIDER
-131
-272
-314
-305
+288
+491
+471
+524
 female_prob_exploit
 female_prob_exploit
 0
 1
-0.5
+0.6
 0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-27
-414
-324
-564
+248
+22
+703
+172
 Average Compatibility / Tick
 tick
 avg compat
 0.0
-550.0
+100.0
 0.0
 1.0
 true
-true
+false
 "" ""
 PENS
 "mean" 1.0 0 -16777216 true "" "plot mean last [all_compatibilities] of one-of boards"
-"max" 1.0 2 -2674135 true "" "plot max last [all_compatibilities] of one-of boards"
-"min" 1.0 2 -8330359 true "" "plot min last [all_compatibilities] of one-of boards"
+"max" 1.0 2 -13840069 true "" "plot max last [all_compatibilities] of one-of boards"
+"min" 1.0 2 -2674135 true "" "plot min last [all_compatibilities] of one-of boards"
 
 PLOT
-345
-391
-656
-541
+496
+456
+697
+576
 M / F participation
 tick
 gender
 0.0
 10.0
 0.0
-10.0
-true
+9.0
+false
 true
 "" ""
 PENS
 "male" 1.0 0 -4079321 true "" "plot [male_participation] of one-of boards"
 "female" 1.0 0 -5298144 true "" "plot [female_participation] of one-of boards"
+
+CHOOSER
+9
+291
+235
+336
+Method
+Method
+"Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
+1
+
+PLOT
+249
+177
+703
+327
+Attention Norm
+ticks
+Trends
+0.0
+100.0
+0.0
+1.0
+true
+true
+"" ""
+PENS
+"Explore" 1.0 0 -13840069 true "" "plot explore_trend"
+"Exploit" 1.0 0 -8630108 true "" "plot exploit_trend"
+
+PLOT
+376
+332
+700
+452
+Divergency from Initial KU
+ticks
+divergence
+0.0
+110.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean divergencies"
 
 @#$#@#$#@
 ## WHAT IS IT?
