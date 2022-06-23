@@ -2,9 +2,17 @@ extensions [table]
 
 globals [
   mf_ratio
+
   explore_trend
   exploit_trend
   attention_norm
+
+  male_exploit_trend
+  male_attention_norm
+
+  female_exploit_trend
+  female_attention_norm
+
   first_ku
   divergencies
 ]
@@ -114,26 +122,17 @@ to setup-board
     set compatibilities []
 
     create-links-with other agents [
-      set thickness 0.3
+      set thickness 0.4
+      if [gender] of [end1] of self = "m" [ set color yellow ]
+      if [gender] of [end1] of self = "f" [ set color orange ]
     ]
-    color-links
-  ]
-end
-
-to color-links
-  ask links
-  [
-    ifelse [gender] of end1 = "m" [
-      set color yellow
-    ]
-    [
-      set color red
-    ]
-  ]
+   ]
 end
 
 to setup-agents
   let agent_ctr number_of_agents
+  let m_ctr 0
+  let f_ctr 0
   create-agents number_of_agents
   [
     set shape "circle"
@@ -143,8 +142,8 @@ to setup-agents
     set kus []
 
     ; 16 compat em 60  test
-    ; 40 compat em 150 simulate
-    let compat_kus_ctr 16
+    ; 40 compat em 150 run simulation
+    let compat_kus_ctr 40
     let incompat_kus_ctr (ku_number - compat_kus_ctr)
 
     let ku_ctr ku_number
@@ -190,12 +189,33 @@ to setup-agents
       error "ERROR: 0:0 Male Female Ratio"
       stop
     ][
-      if-else random-float 1 < mf_ratio[
-        set gender "m"
-        set label "♂"
-      ][
+      ; type "males " print m_ctr
+      ; type "females " print f_ctr
+      ; type number_of_agents * mf_ratio type " males for " type number_of_agents - (number_of_agents * mf_ratio) print " females"
+
+      ; too many males
+      if-else m_ctr >= number_of_agents * mf_ratio [
         set gender "f"
         set label "♀"
+        set f_ctr f_ctr + 1
+      ][ ; too many females
+        if-else f_ctr >= number_of_agents - (number_of_agents * mf_ratio) [
+
+          set gender "m"
+          set label "♂"
+          set m_ctr m_ctr + 1
+        ]
+        [ ; hasnt reached limit, random
+          if-else random-float 1 < mf_ratio[
+            set gender "m"
+            set label "♂"
+            set m_ctr m_ctr + 1
+          ][
+            set gender "f"
+            set label "♀"
+            set f_ctr f_ctr + 1
+          ]
+        ]
       ]
     ]
 
@@ -242,7 +262,7 @@ end
 to go
   tick
   random-walk
-  ;; add-to-board
+  ;; add-to-board-compatibility-method
 end
 
 to go-200
@@ -302,6 +322,7 @@ to update-board-vars
     ;; type "compats " print all_compatibilities
 
     set compatibilities []
+    set curr_agents[]
   ]
   ;; show-board-vars
 end
@@ -387,79 +408,161 @@ to random-walk
     ; type "Attention norm is - to " print attention_norm
   ]
 
+  if Method = "Attention Norm - Gendered" [
+    ; type "Trends : Exploit " type precision exploit_trend 2 type " Explore " print precision explore_trend 2
+    set male_exploit_trend (male_exploit_ctr) / (m)
+    if-else male_exploit_trend > (1 - male_exploit_trend)
+    [ set male_attention_norm "exploit" ]
+    [ set male_attention_norm "explore" ]
+
+    set female_exploit_trend (female_exploit_ctr) / (f)
+    if-else female_exploit_trend > (1 - female_exploit_trend)
+    [ set female_attention_norm "exploit" ]
+    [ set female_attention_norm "explore" ]
+
+    ; type "Male Attention norm is - to " print male_attention_norm
+    ; type "Female Attention norm is - to " print female_attention_norm
+  ]
+
   foreach ts [agent ->
-    add-to-board agent
+    if Method = "Compatibility" [ add-to-board-compatibility-method agent ]
+    if Method = "Attention Norm - General" [ add-to-board-attention-norm-method agent ]
+    if Method = "Attention Norm - Gendered" [ add-to-board-attention-norm-gendered-method agent ]
   ]
 
   update-board-vars
 end
 
-to add-to-board [agent]
+to add-to-board-compatibility-method [agent]
 
   ask boards [
-    ;; type " history " print board_history
-
     ; get last board's kus
     foreach last board_history [ ku_on_board ->
       ; calc compat focused_ku x ku_on_board
       let compat get-compat-as-decimal [focused_ku] of agent ku_on_board
+      if compat > c_threshold [
+        ; add focused_ku if not there
+        if not member? [focused_ku] of agent curr_board [
+          ; add compatible ku to current board
+          set curr_board lput [focused_ku] of agent curr_board
 
-      ; add compat to list of compatibilities
-      set compatibilities lput compat compatibilities
+          ; add agent to current connected agents
+          set curr_agents lput [who] of agent curr_agents
 
-      if Method = "Compatibility"[
-        if compat > c_threshold [
-          ; add focused_ku if not there
-          if not member? [focused_ku] of agent curr_board [
-            ; add compatible ku to current board
-            set curr_board lput [focused_ku] of agent curr_board
+          ; add compat to list of compatibilities
+          set compatibilities lput compat compatibilities
 
-            ; add agent to current connected agents
-            set curr_agents lput [who] of agent curr_agents
-
-            set divergencies lput (1 - (get-compat-as-decimal [focused_ku] of agent first_ku)) divergencies
-          ]
+          set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
         ]
       ]
-
-      if Method = "Attention Norm - General" [
-        ;type " Attention norm é general, não adicionou nada ainda"
-
-        ; calc % to commit
-        let rand random-float 1
-        let chance 0.2
-
-        if ((compat > c_threshold) and (attention_norm = "exploit"))
-        or ((compat <= c_threshold) and (attention_norm = "explore"))
-        [
-          set chance 0.8
-        ]
-        ; está bom. funciona
-        ;type "\ncompat " print compat
-        ;type "c_threshold " print c_threshold
-        ;type "attention_norm " print attention_norm
-        ;type "chance " print chance
-
-        if random-float 1 < chance [
-          ; add focused_ku if not there
-          if not member? [focused_ku] of agent curr_board [
-            ; add compatible ku to current board
-            set curr_board lput [focused_ku] of agent curr_board
-
-            ; add agent to current connected agents
-            set curr_agents lput [who] of agent curr_agents
-
-            set divergencies lput (1 - (get-compat-as-decimal [focused_ku] of agent first_ku)) divergencies
-          ]
-        ]
-      ]
-
-      set curr_board remove-duplicates curr_board
     ]
 
+    set curr_board remove-duplicates curr_board
     ;;type "KUs on Board:" print curr_board
   ]
 end
+
+to add-to-board-attention-norm-method [agent]
+  ; let posts false
+  let compatible false
+  let compat 0
+  ; type "agent " print [who] of agent
+  ask boards [
+    ; get last board's kus
+    foreach last board_history [ ku_on_board ->
+      if not compatible [
+        ; calc compat focused_ku x ku_on_board
+        set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
+        if compat > c_threshold [
+          set compatible true
+          ; stop ; leave for loop
+        ]
+      ]
+    ]
+    let chance 0.2
+
+    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.8 ]
+    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.8 ]
+
+    ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
+    let r random-float 1
+    if r < chance [
+      ;;type "Vai postar , " type precision r 3 print "%"
+
+      ; add focused_ku if not there
+      if not member? [focused_ku] of agent curr_board [
+        ; add compatible ku to current board
+        set curr_board lput [focused_ku] of agent curr_board
+
+        ; add agent to current connected agents
+        set curr_agents lput [who] of agent curr_agents
+
+        ; add compat to list of compatibilities
+        set compatibilities lput compat compatibilities
+
+        set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
+      ]
+    ]
+
+
+    set curr_board remove-duplicates curr_board
+    ;;type "KUs on Board:" print curr_board
+  ]
+end
+
+to add-to-board-attention-norm-gendered-method [agent]
+  ; let posts false
+  let compatible false
+  let compat 0
+  ; type "agent " print [who] of agent
+  ask boards [
+    ; get last board's kus
+    foreach last board_history [ ku_on_board ->
+      if not compatible [
+        ; calc compat focused_ku x ku_on_board
+        set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
+        if compat > c_threshold [
+          set compatible true
+          ; stop ; leave for loop
+        ]
+      ]
+    ]
+    let chance 0.2
+
+    if-else [gender] of agent = "m"[
+      if ((compatible)     and (male_attention_norm = "exploit")) [ set chance 0.8 ]
+      if ((not compatible) and (male_attention_norm = "explore")) [ set chance 0.8 ]
+    ] ; gender f
+    [
+      if ((compatible)     and (female_attention_norm = "exploit")) [ set chance 0.8 ]
+      if ((not compatible) and (female_attention_norm = "explore")) [ set chance 0.8 ]
+    ]
+
+    ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
+    let r random-float 1
+    if r < chance [
+      ;;type "Vai postar , " type precision r 3 print "%"
+
+      ; add focused_ku if not there
+      if not member? [focused_ku] of agent curr_board [
+        ; add compatible ku to current board
+        set curr_board lput [focused_ku] of agent curr_board
+
+        ; add agent to current connected agents
+        set curr_agents lput [who] of agent curr_agents
+
+        ; add compat to list of compatibilities
+        set compatibilities lput compat compatibilities
+
+        set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
+      ]
+    ]
+
+    set curr_board remove-duplicates curr_board
+    ;;type "KUs on Board:" print curr_board
+  ]
+end
+
 ;; switch focus to a directly connected KU
 to exploit [agent]
   ;; check every tuple from list of links
@@ -638,10 +741,10 @@ end
 ;; ( first / last ) list
 @#$#@#$#@
 GRAPHICS-WINDOW
-10
-58
-233
-282
+8
+50
+231
+274
 -1
 -1
 6.52
@@ -665,10 +768,10 @@ ticks
 30.0
 
 BUTTON
+8
 10
-18
-73
-51
+71
+43
 NIL
 setup\n
 NIL
@@ -682,10 +785,10 @@ NIL
 1
 
 BUTTON
-81
-19
-144
-52
+79
+11
+142
+44
 NIL
 go\n
 NIL
@@ -699,25 +802,25 @@ NIL
 1
 
 SLIDER
-18
-446
-177
-479
+11
+389
+128
+422
 ku_number
 ku_number
 0
 250
-60.0
+150.0
 10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-18
-489
-177
-522
+12
+426
+129
+459
 ku_len
 ku_len
 0
@@ -729,10 +832,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-532
-177
-565
+11
+462
+139
+495
 c_threshold
 c_threshold
 0
@@ -744,25 +847,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-403
-177
-436
+11
+347
+179
+380
 number_of_agents
 number_of_agents
 1
 33
-9.0
+15.0
 2
 1
 NIL
 HORIZONTAL
 
 BUTTON
-153
-19
-235
-52
+151
+11
+233
+44
 NIL
 go-200
 T
@@ -776,10 +879,10 @@ NIL
 1
 
 SLIDER
-188
-531
-280
-564
+9
+541
+101
+574
 males
 males
 0
@@ -791,10 +894,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-188
-491
-280
-524
+9
+501
+101
+534
 females
 females
 0
@@ -806,73 +909,73 @@ NIL
 HORIZONTAL
 
 SLIDER
-287
-531
-473
-564
+108
+541
+290
+574
 male_prob_exploit
 male_prob_exploit
 0
 1
-0.2
+0.3
 0.05
 1
 NIL
 HORIZONTAL
 
 SLIDER
-288
-491
-471
-524
+109
+501
+289
+534
 female_prob_exploit
 female_prob_exploit
 0
 1
-0.6
+0.7
 0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-248
-22
-703
-172
-Average Compatibility / Tick
+240
+10
+817
+148
+Average Compatibility of Posted KUs
 tick
-avg compat
+compat.
 0.0
-100.0
+10.0
 0.0
 1.0
 true
-false
+true
 "" ""
 PENS
-"mean" 1.0 0 -16777216 true "" "plot mean last [all_compatibilities] of one-of boards"
-"max" 1.0 2 -13840069 true "" "plot max last [all_compatibilities] of one-of boards"
+"mean" 1.0 0 -7500403 true "" "plot mean last [all_compatibilities] of one-of boards"
+"max" 1.0 2 -13791810 true "" "plot max last [all_compatibilities] of one-of boards"
 "min" 1.0 2 -2674135 true "" "plot min last [all_compatibilities] of one-of boards"
 
 PLOT
-496
-456
-697
-576
-M / F participation
+492
+439
+816
+567
+M / F Posting
 tick
 gender
 0.0
 10.0
 0.0
 9.0
-false
+true
 true
 "" ""
 PENS
-"male" 1.0 0 -4079321 true "" "plot [male_participation] of one-of boards"
-"female" 1.0 0 -5298144 true "" "plot [female_participation] of one-of boards"
+"male" 1.0 0 -987046 true "" "plot [male_participation] of one-of boards"
+"female" 1.0 0 -955883 true "" "plot [female_participation] of one-of boards"
 
 CHOOSER
 9
@@ -882,44 +985,66 @@ CHOOSER
 Method
 Method
 "Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
-1
+2
 
 PLOT
-249
-177
-703
-327
+243
+281
+817
+431
 Attention Norm
 ticks
 Trends
 0.0
-100.0
+10.0
 0.0
 1.0
 true
 true
 "" ""
 PENS
-"Explore" 1.0 0 -13840069 true "" "plot explore_trend"
-"Exploit" 1.0 0 -8630108 true "" "plot exploit_trend"
+"Explore" 1.0 0 -8630108 true "" "plot explore_trend"
+"Exploit" 1.0 0 -13840069 true "" "plot exploit_trend"
+"Male Exploit" 1.0 0 -1184463 true "" "plot male_exploit_trend"
+"Female Exploit" 1.0 0 -955883 true "" "plot female_exploit_trend"
 
 PLOT
-376
-332
-700
-452
-Divergency from Initial KU
+239
+155
+818
+275
+Mean Divergence from Initial KU
 ticks
-divergence
+hamming
 0.0
-110.0
+10.0
 0.0
 1.0
+true
+true
+"" ""
+PENS
+"mean" 1.0 0 -9276814 true "" "plot mean divergencies"
+"max" 1.0 2 -13791810 true "" "plot max divergencies"
+"min" 1.0 2 -2674135 true "" "plot min divergencies"
+
+PLOT
+307
+441
+487
+569
+Burst length
+ticks
+length
+0.0
+10.0
+0.0
+10.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean divergencies"
+"default" 1.0 0 -16777216 true "" "plot length last [board_history] of one-of boards"
 
 @#$#@#$#@
 ## WHAT IS IT?
