@@ -15,6 +15,10 @@ globals [
 
   first_ku
   divergencies
+  compat_with_init_ctr
+  incompat_with_init_ctr
+  compat_ratio
+  all_compat_ratios
 ]
 
 breed [boards board]
@@ -74,6 +78,8 @@ to setup
   show-mf-ratio
 
   setup-board
+
+  set all_compat_ratios []
 
   reset-ticks
   ;; go
@@ -288,8 +294,27 @@ to update-board-vars
       ;; duplicate last
       set board_history lput (last board_history) board_history
       show-board-vars
-      print "CURR _ BOARD WAS EMPTY"
+      print "Curr board is empty"
     ]
+
+    foreach divergencies [ d ->
+      if-else d < c_threshold
+      [ set compat_with_init_ctr compat_with_init_ctr + 1]
+      [ set incompat_with_init_ctr incompat_with_init_ctr + 1]
+    ]
+
+    let ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
+
+    if-else ratio = 0.5 [ set compat_ratio 0 ]
+    [
+      if-else ratio > 0.5
+      [ set compat_ratio 1 ]
+      [ set compat_ratio -1 ]
+    ]
+
+    set all_compat_ratios lput compat_ratio all_compat_ratios
+
+    ; type "compatibility ratio " print compat_ratio
 
     ;; reset current list
     set curr_board []
@@ -319,6 +344,12 @@ to update-board-vars
 
     ;; compatibilities
     set all_compatibilities lput sort compatibilities all_compatibilities
+
+   ; set all_compatibilities lput sort compatibilities all_compatibilities
+
+    ;set all_compatibilities lput sort compatibilities all_compatibilities
+
+
     ;; type "compats " print all_compatibilities
 
     set compatibilities []
@@ -360,6 +391,20 @@ to-report compats-report
   ]
   report string
 end
+
+; report to python all compatibility ratios, to get average length before topic divergence
+to-report compat-ratio-report
+  let string 0.0
+
+  ask boards[
+    foreach all_compat_ratios [ c ->
+      set string (sentence string c)
+    ]
+  ]
+  report string
+end
+
+
 
 to random-walk
   let ts sort agents
@@ -503,7 +548,6 @@ to add-to-board-attention-norm-method [agent]
         set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
       ]
     ]
-
 
     set curr_board remove-duplicates curr_board
     ;;type "KUs on Board:" print curr_board
@@ -855,7 +899,7 @@ number_of_agents
 number_of_agents
 1
 33
-15.0
+5.0
 2
 1
 NIL
@@ -902,7 +946,7 @@ females
 females
 0
 5
-2.0
+1.0
 1
 1
 NIL
@@ -917,7 +961,7 @@ male_prob_exploit
 male_prob_exploit
 0
 1
-0.3
+0.35
 0.05
 1
 NIL
@@ -932,16 +976,16 @@ female_prob_exploit
 female_prob_exploit
 0
 1
-0.7
+0.65
 0.05
 1
 NIL
 HORIZONTAL
 
 PLOT
-240
+244
 10
-817
+516
 148
 Average Compatibility of Posted KUs
 tick
@@ -1009,10 +1053,10 @@ PENS
 "Female Exploit" 1.0 0 -955883 true "" "plot female_exploit_trend"
 
 PLOT
-239
-155
-818
-275
+524
+10
+849
+147
 Mean Divergence from Initial KU
 ticks
 hamming
@@ -1045,6 +1089,24 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot length last [board_history] of one-of boards"
+
+PLOT
+240
+151
+835
+271
+Topic Divergence
+ticks
+compat
+0.0
+10.0
+-2.0
+2.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot compat_ratio"
 
 @#$#@#$#@
 ## WHAT IS IT?
