@@ -459,7 +459,7 @@ to-report get-in-topic
   ask boards[
     foreach all_divergencies [ divergency_burst ->
       foreach divergency_burst [ c ->
-        print c
+
         if-else c >= c_threshold
         [ set string (sentence string 1) ] ; in-topic
         [ set string (sentence string 0) ] ; out-of-topic
