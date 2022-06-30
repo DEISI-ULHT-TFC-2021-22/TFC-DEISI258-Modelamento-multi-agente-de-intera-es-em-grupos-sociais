@@ -869,9 +869,9 @@ end
 ;; ( first / last ) list
 @#$#@#$#@
 GRAPHICS-WINDOW
-8
+6
 50
-231
+229
 274
 -1
 -1
@@ -896,9 +896,9 @@ ticks
 30.0
 
 BUTTON
-8
+6
 10
-71
+69
 43
 NIL
 setup\n
@@ -913,9 +913,9 @@ NIL
 1
 
 BUTTON
-79
+77
 11
-142
+140
 44
 NIL
 go\n
@@ -930,10 +930,10 @@ NIL
 1
 
 SLIDER
-11
-389
-128
-422
+7
+321
+176
+355
 ku_number
 ku_number
 0
@@ -945,10 +945,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-12
-426
-129
-459
+7
+361
+175
+395
 ku_len
 ku_len
 0
@@ -960,10 +960,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-462
-139
-495
+7
+401
+176
+435
 c_threshold
 c_threshold
 0
@@ -975,24 +975,24 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-347
-179
-380
+7
+282
+175
+315
 number_of_agents
 number_of_agents
 1
 33
-5.0
+15.0
 2
 1
 NIL
 HORIZONTAL
 
 BUTTON
-151
+149
 11
-233
+231
 44
 NIL
 go-200
@@ -1007,10 +1007,10 @@ NIL
 1
 
 SLIDER
-9
-541
-101
-574
+7
+486
+99
+519
 males
 males
 0
@@ -1022,25 +1022,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-9
-501
-101
-534
+7
+446
+99
+479
 females
 females
 0
 5
-2.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-108
-541
-290
-574
+106
+486
+288
+519
 male_prob_exploit
 male_prob_exploit
 0
@@ -1052,10 +1052,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-109
-501
-289
-534
+107
+446
+287
+479
 female_prob_exploit
 female_prob_exploit
 0
@@ -1067,9 +1067,9 @@ NIL
 HORIZONTAL
 
 PLOT
-244
+242
 10
-516
+514
 148
 Average Compatibility of Posted KUs
 tick
@@ -1087,10 +1087,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min last [all_compatibilities] of one-of boards"
 
 PLOT
-492
-439
-816
-567
+513
+444
+837
+572
 M / F Posting
 tick
 gender
@@ -1106,20 +1106,20 @@ PENS
 "female" 1.0 0 -955883 true "" "plot [female_participation] of one-of boards"
 
 CHOOSER
-9
-291
-235
-336
+8
+524
+288
+570
 Method
 Method
 "Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
 1
 
 PLOT
-243
-281
-817
-431
+196
+283
+839
+433
 Attention Norm
 ticks
 Trends
@@ -1137,9 +1137,9 @@ PENS
 "Female Exploit" 1.0 0 -955883 true "" "plot female_exploit_trend"
 
 PLOT
-524
+522
 10
-849
+837
 147
 Mean Divergence from Initial KU
 ticks
@@ -1157,10 +1157,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min divergencies"
 
 PLOT
-307
-441
-487
-569
+301
+444
+503
+572
 Burst length
 ticks
 length
@@ -1175,10 +1175,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot length last [board_history] of one-of boards"
 
 PLOT
-240
-151
-835
-271
+243
+154
+838
+274
 Topic Divergence
 ticks
 compat
