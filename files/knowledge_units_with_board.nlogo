@@ -313,7 +313,11 @@ to update-board-vars
     if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
       set ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
     ]
-    if-else ratio = 0.5 [ set compat_ratio 0 ]
+
+    if-else ratio >= 0.45 and ratio <= 0.55
+    [
+      set compat_ratio 0
+    ] ; polarised
     [
       if-else ratio > 0.5
       [ set compat_ratio 1 ]
@@ -405,8 +409,23 @@ end
 
 ; report to python all compatibility ratios, to get average length before topic divergence
 to-report compat-ratio-report
-  let string 0.0
+  let string 1
+  let last_compat 1
+  ask boards[
+    foreach all_compat_ratios [ c ->
 
+      if-else c = 0 [set string (sentence string last_compat)] ; report last compat if polarised
+      [
+        set string (sentence string c)
+        set last_compat c ; update last when not polarised
+      ]
+    ]
+  ]
+  report string
+end
+
+to-report compat-ratio-report-with-polarisation
+  let string 1
   ask boards[
     foreach all_compat_ratios [ c ->
       set string (sentence string c)
@@ -1015,7 +1034,7 @@ males
 males
 0
 5
-1.0
+2.0
 1
 1
 NIL
@@ -1045,7 +1064,7 @@ male_prob_exploit
 male_prob_exploit
 0
 1
-0.75
+0.35
 0.05
 1
 NIL
@@ -1060,7 +1079,7 @@ female_prob_exploit
 female_prob_exploit
 0
 1
-0.85
+0.65
 0.05
 1
 NIL
@@ -1113,7 +1132,7 @@ CHOOSER
 Method
 Method
 "Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
-1
+2
 
 PLOT
 196
