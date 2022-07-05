@@ -35,6 +35,7 @@ boards-own [
 
   all_compatibilities
   compatibilities
+  ratio
 
   all_participations
   male_participation
@@ -57,8 +58,6 @@ to setup
   ;random-seed 250474
 
   set first_ku 255 ; 0000 0000 1111 1111
-
-  ;setup-exploit-table
 
   let male_exploit male_prob_exploit
   let female_exploit female_prob_exploit
@@ -89,28 +88,6 @@ to setup
   ;; go
 end
 
-;to setup-exploit-table
-;  let exploit_table table:make
-;
-;  let genders ["male" "female" "other"]
-;  let classes ["high" "medium" "low"]
-;  let value 0.1
-;
-;  foreach genders [ g ->
-;    foreach classes [ c ->
-;      table:put exploit_table ( word g " " c ) value
-;    ]
-;  ]
-;
-;  table:put exploit_table "male medium" 0.5
-;  table:put exploit_table "female medium" 0.1
-;
-  ;type"\n\nEXPLOIT TABE L " print exploit_table
-;  foreach table:keys exploit_table [ it ->
-;    type it type " -> " print table:get exploit_table it
-;  ]
-;end
-
 to setup-board
   create-boards 1
   [
@@ -138,7 +115,8 @@ to setup-board
       if [gender] of [end1] of self = "m" [ set color yellow ]
       if [gender] of [end1] of self = "f" [ set color orange ]
     ]
-   ]
+
+  ]
 end
 
 to setup-agents
@@ -277,8 +255,8 @@ to go
   ;; add-to-board-compatibility-method
 end
 
-to go-200
-  if-else ticks < 200 [
+to go-500
+  if-else ticks < 500 [
     tick
     random-walk
   ] [
@@ -309,20 +287,22 @@ to update-board-vars
       [ set incompat_with_init_ctr incompat_with_init_ctr + 1]
     ]
 
-    let ratio 0.5
-    if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
+    ;set ratio 0.5
+    ;if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
       set ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
-    ]
+    ;]
 
-    if-else ratio >= 0.45 and ratio <= 0.55
-    [
-      set compat_ratio 0
-    ] ; polarised
-    [
+    print ratio
+
+    ;if-else ratio >= 0.45 and ratio <= 0.55
+    ;[
+    ;  set compat_ratio 0
+    ;] ; polarised
+    ;[
       if-else ratio > 0.5
       [ set compat_ratio 1 ]
       [ set compat_ratio -1 ]
-    ]
+   ; ]
 
     set all_compat_ratios lput compat_ratio all_compat_ratios
     set all_divergencies lput divergencies all_divergencies
@@ -1014,7 +994,7 @@ BUTTON
 231
 44
 NIL
-go-200
+go-500
 T
 1
 T
@@ -1034,7 +1014,7 @@ males
 males
 0
 5
-2.0
+1.0
 1
 1
 NIL
@@ -1196,7 +1176,7 @@ PENS
 PLOT
 243
 154
-838
+542
 274
 Topic Divergence
 ticks
@@ -1210,6 +1190,24 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot compat_ratio"
+
+PLOT
+550
+155
+837
+275
+Pure Compatibilities with First KU
+Tick
+Compatibility with First KU
+0.0
+1.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot [ratio] of one-of boards"
 
 @#$#@#$#@
 ## WHAT IS IT?

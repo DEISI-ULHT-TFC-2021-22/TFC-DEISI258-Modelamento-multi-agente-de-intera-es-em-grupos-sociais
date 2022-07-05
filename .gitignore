@@ -1,1 +1,3 @@
 tfc_venv/
+files/*.tmp.*
+.history

@@ -6,8 +6,8 @@ Orientador: **Manuel Marques Pita**
 
 Para esta entrega, há duas componentes:
 
--   A simulação desenvolvida em NetLogo
--   O conector em Python (Novo)
+- A simulação desenvolvida em NetLogo
+- O conector em Python (Novo)
 
 ## NetLogo
 
@@ -31,11 +31,11 @@ Para correr a simulação em si, só é necessário [instalar o NetLogo](https:/
 
 Para correr o [notebook](pynetlogo_ku.ipynb), há várias opções:
 
--   IDEs como o PyCharm ou o VSCode já têm plugins ou mesmo a funcionalidade built-in de trabalhar com este tipo de
-    ficheiros (criar/alterar/executar)
--   Instalar o [Jupyter Notebooks](https://jupyter.org/install), para executar o ficheiro localmente no browser
+- IDEs como o PyCharm ou o VSCode já têm plugins ou mesmo a funcionalidade built-in de trabalhar com este tipo de
+  ficheiros (criar/alterar/executar)
+- Instalar o [Jupyter Notebooks](https://jupyter.org/install), para executar o ficheiro localmente no browser
 
-Também é necessário [instalar o Python](https://www.python.org/downloads/) (versão 3.10.4) e adicionar o endereço da instalação do NetLogo às Variáveis de Ambiente da máquina.
+Também é necessário [instalar o Python](https://www.python.org/downloads/) (versão >= 3.8.8) e adicionar o endereço da instalação do NetLogo às Variáveis de Ambiente da máquina.
 
 ## Demonstração Video
 
