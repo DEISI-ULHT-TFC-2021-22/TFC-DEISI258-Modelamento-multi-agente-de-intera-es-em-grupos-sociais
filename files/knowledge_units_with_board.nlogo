@@ -3,7 +3,6 @@ extensions [table]
 globals [
   mf_ratio
 
-  explore_trend
   exploit_trend
   attention_norm
 
@@ -14,12 +13,12 @@ globals [
   female_attention_norm
 
   first_ku
-  divergencies
-  all_divergencies
+  divergencies_from_first_ku ; hamming distance for ALL messages in relation to first_ku
+  all_divergencies_from_first_ku
 
   compat_with_init_ctr
   incompat_with_init_ctr
-  compat_ratio
+  compat_ratio ; was the mean ku compat with first_ku?
   all_compat_ratios ; ratios of compat / incompat msgs per tick
 ]
 
@@ -33,9 +32,9 @@ boards-own [
   agents_history
   curr_agents
 
+  ratio ; compat / incompat ratio, cant delete because of plot
   all_compatibilities
   compatibilities
-  ratio
 
   all_participations
   male_participation
@@ -71,18 +70,18 @@ to setup
   setup-agents
   layout-circle agents 12
 
-  let y sort agents
-  foreach y [ x ->
-    type [who] of x type " unique KUs : " print sort [kus] of x
-    type [who] of x type " links : " print [list_of_links] of x
-    type [gender] of x type "\n"
-  ]
+  ;let y sort agents
+  ;foreach y [ x ->
+    ;type [who] of x type " unique KUs : " print sort [kus] of x
+    ;type [who] of x type " links : " print [list_of_links] of x
+    ;type [gender] of x type "\n"
+  ;]
   show-mf-ratio
 
   setup-board
 
   set all_compat_ratios []
-  set all_divergencies []
+  set all_divergencies_from_first_ku []
 
   reset-ticks
   ;; go
@@ -260,7 +259,7 @@ to go-500
     tick
     random-walk
   ] [
-    show-board-vars
+    ; show-board-vars
     stop
   ]
 end
@@ -277,35 +276,35 @@ to update-board-vars
     ] [
       ;; duplicate last
       set board_history lput (last board_history) board_history
-      show-board-vars
+      ; show-board-vars
       print "Curr board is empty"
     ]
 
-    foreach divergencies [ d ->
+    foreach divergencies_from_first_ku [ d ->
       if-else d < c_threshold
       [ set compat_with_init_ctr compat_with_init_ctr + 1]
       [ set incompat_with_init_ctr incompat_with_init_ctr + 1]
     ]
 
-    ;set ratio 0.5
-    ;if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
+    set ratio 1
+    if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
       set ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
-    ;]
+    ]
 
-    print ratio
+    ; print ratio
 
-    ;if-else ratio >= 0.45 and ratio <= 0.55
-    ;[
-    ;  set compat_ratio 0
-    ;] ; polarised
-    ;[
+    if-else ratio >= 0.45 and ratio <= 0.55
+    [
+      set compat_ratio 0
+    ] ; polarised
+    [
       if-else ratio > 0.5
       [ set compat_ratio 1 ]
       [ set compat_ratio -1 ]
-   ; ]
+    ]
 
     set all_compat_ratios lput compat_ratio all_compat_ratios
-    set all_divergencies lput divergencies all_divergencies
+    set all_divergencies_from_first_ku lput divergencies_from_first_ku all_divergencies_from_first_ku
 
     ; type "compatibility ratio " print compat_ratio
 
@@ -456,7 +455,7 @@ to-report get-in-topic
   let string 1
 
   ask boards[
-    foreach all_divergencies [ divergency_burst ->
+    foreach all_divergencies_from_first_ku [ divergency_burst ->
       foreach divergency_burst [ c ->
         print c
         if-else c >= c_threshold
@@ -479,23 +478,13 @@ to-report get-board-history
   report remove-item 0 string
 end
 
-to-report get-divergencies
-  let string 0.0
-
-  foreach divergencies [ d ->
-    set string (sentence string d)
-  ]
-
-  report remove-item 0 string
-end
-
 to random-walk
   let ts sort agents
 
   let male_exploit_ctr 0
   let female_exploit_ctr 0
 
-  set divergencies []
+  set divergencies_from_first_ku []
 
   foreach ts [ agent ->
     ;; change focused ku
@@ -525,11 +514,10 @@ to random-walk
   if Method = "Attention Norm - General" [
     ; sum agents exploiting / sum all agents
     set exploit_trend (male_exploit_ctr + female_exploit_ctr) / (f + m)
-    set explore_trend 1 - exploit_trend
 
     ; type "Trends : Exploit " type precision exploit_trend 2 type " Explore " print precision explore_trend 2
 
-    if-else exploit_trend > explore_trend
+    if-else exploit_trend >= 0.5
     [ set attention_norm "exploit" ]
     [ set attention_norm "explore" ]
 
@@ -539,12 +527,12 @@ to random-walk
   if Method = "Attention Norm - Gendered" [
     ; type "Trends : Exploit " type precision exploit_trend 2 type " Explore " print precision explore_trend 2
     set male_exploit_trend (male_exploit_ctr) / (m)
-    if-else male_exploit_trend > (1 - male_exploit_trend)
+    if-else male_exploit_trend >= 0.5 ; se a trend for a maiorira
     [ set male_attention_norm "exploit" ]
     [ set male_attention_norm "explore" ]
 
     set female_exploit_trend (female_exploit_ctr) / (f)
-    if-else female_exploit_trend > (1 - female_exploit_trend)
+    if-else female_exploit_trend >= 0.5 ; se a trend for a maioria
     [ set female_attention_norm "exploit" ]
     [ set female_attention_norm "explore" ]
 
@@ -580,7 +568,7 @@ to add-to-board-compatibility-method [agent]
           ; add compat to list of compatibilities
           set compatibilities lput compat compatibilities
 
-          set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
+          set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
         ]
       ]
     ]
@@ -628,7 +616,7 @@ to add-to-board-attention-norm-method [agent]
         ; add compat to list of compatibilities
         set compatibilities lput compat compatibilities
 
-        set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
+        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
       ]
     ]
 
@@ -670,6 +658,7 @@ to add-to-board-attention-norm-gendered-method [agent]
     if r < chance [
       ;;type "Vai postar , " type precision r 3 print "%"
 
+      ; TODO : is this check necessary ? im already removing duplicate
       ; add focused_ku if not there
       if not member? [focused_ku] of agent curr_board [
         ; add compatible ku to current board
@@ -681,7 +670,7 @@ to add-to-board-attention-norm-gendered-method [agent]
         ; add compat to list of compatibilities
         set compatibilities lput compat compatibilities
 
-        set divergencies lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies
+        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
       ]
     ]
 
@@ -932,7 +921,7 @@ SLIDER
 7
 321
 176
-355
+354
 ku_number
 ku_number
 0
@@ -947,7 +936,7 @@ SLIDER
 7
 361
 175
-395
+394
 ku_len
 ku_len
 0
@@ -962,7 +951,7 @@ SLIDER
 7
 401
 176
-435
+434
 c_threshold
 c_threshold
 0
@@ -1108,7 +1097,7 @@ CHOOSER
 8
 524
 288
-570
+569
 Method
 Method
 "Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
@@ -1130,7 +1119,7 @@ true
 true
 "" ""
 PENS
-"Explore" 1.0 0 -8630108 true "" "plot explore_trend"
+"Explore" 1.0 0 -8630108 true "" "plot ( 1 - exploit_trend )"
 "Exploit" 1.0 0 -13840069 true "" "plot exploit_trend"
 "Male Exploit" 1.0 0 -1184463 true "" "plot male_exploit_trend"
 "Female Exploit" 1.0 0 -955883 true "" "plot female_exploit_trend"
@@ -1151,9 +1140,9 @@ true
 true
 "" ""
 PENS
-"mean" 1.0 0 -9276814 true "" "plot mean divergencies"
-"max" 1.0 2 -13791810 true "" "plot max divergencies"
-"min" 1.0 2 -2674135 true "" "plot min divergencies"
+"mean" 1.0 0 -9276814 true "" "plot mean divergencies_from_first_ku"
+"max" 1.0 2 -13791810 true "" "plot max divergencies_from_first_ku"
+"min" 1.0 2 -2674135 true "" "plot min divergencies_from_first_ku"
 
 PLOT
 301
