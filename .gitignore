@@ -2,3 +2,4 @@ tfc_venv/
 files/*.tmp.*
 .history
 .ipynb_checkpoints
+notes.txt
