@@ -26,17 +26,16 @@ breed [boards board]
 breed [agents _agent]
 
 boards-own [
-  curr_board ;; current kus on board
-  board_history ;; history of kus posted on the board per tick
+  curr_board     ; current kus on board
+  board_history  ; history of kus posted on the board per tick
 
-  agents_history
-  curr_agents
+  agents_history ; all agents that sent kus to board
+  curr_agents    ; agents that sent ku to board this tick
 
   ratio ; compat / incompat ratio, cant delete because of plot
   all_compatibilities
   compatibilities
 
-  all_participations
   male_participation
   female_participation
 ]
@@ -59,7 +58,7 @@ to setup
   set first_ku 255 ; 0000 0000 1111 1111
 
   let male_exploit male_prob_exploit
-  let female_exploit female_prob_exploit
+  let female_exploit female_prob_exploit ; TODO : why am I doing this ? seems useless i can just use female_prob_exploit
   set mf_ratio (males / (males + females))
 
   if ku_number > (2 ^ ku_len) [
@@ -95,19 +94,14 @@ to setup-board
     set size 5
     set label "board"
 
-    ;; store which agents participated in each round
-    set agents_history []
+    set agents_history [] ; save agent participation
     set curr_agents []
 
-    ;; add first ku to board
-    ;set board_history lput (insert-item 0 [] random (2 ^ ku_len)) []
-    set board_history lput (insert-item 0 [] first_ku) []
+    set board_history lput (insert-item 0 [] first_ku) [] ; add first ku to board
     set curr_board []
 
     set all_compatibilities []
     set compatibilities []
-
-    set all_participations []
 
     create-links-with other agents [
       set thickness 0.4
@@ -135,12 +129,11 @@ to setup-agents
     let compat_kus_ctr 40
     let incompat_kus_ctr (ku_number - compat_kus_ctr)
 
-    let ku_ctr ku_number
     ;; generate ku_number of kus
     repeat ku_number [
       let this_ku random (2 ^ ku_len)
 
-      ;; check if any agent already has this value as its content
+      ;; is ku unique? is the quota for compatible/incompat ku's filled?
       while [(member? this_ku kus)
         or ((get-compat-as-decimal this_ku first_ku) >  c_threshold and compat_kus_ctr = 0)
         or ((get-compat-as-decimal this_ku first_ku) <= c_threshold and incompat_kus_ctr = 0)
@@ -149,18 +142,12 @@ to setup-agents
         set this_ku random (2 ^ ku_len)
       ]
 
-      if-else (get-compat-as-decimal this_ku first_ku) > c_threshold [
-        set compat_kus_ctr (compat_kus_ctr - 1)
-      ] [
-        set incompat_kus_ctr (incompat_kus_ctr - 1)
-      ]
+      if-else (get-compat-as-decimal this_ku first_ku) > c_threshold
+      [ set compat_kus_ctr   (compat_kus_ctr - 1) ]
+      [ set incompat_kus_ctr (incompat_kus_ctr - 1) ]
 
       set kus lput this_ku kus
-
-      ; type "Compat left -> " print compat_kus_ctr
-      ; type "Incompat left -> " print incompat_kus_ctr
-
-      set ku_ctr ku_ctr - 1
+      ; print ( ku_number - length kus ) ; show ku's left
      ]
 
     print "Bottleneck !!!"
@@ -208,12 +195,8 @@ to setup-agents
       ]
     ]
 
-    if-else gender = "m" [
-      set prob_exploit male_prob_exploit
-      ; TODO : need to get value table of exploit probabilties
-    ][
-      set prob_exploit female_prob_exploit
-    ]
+    if-else gender = "m" [ set prob_exploit male_prob_exploit ]
+    [ set prob_exploit female_prob_exploit ]
 
     set agent_ctr agent_ctr - 1
     type agent_ctr print " agents left"
@@ -251,7 +234,6 @@ end
 to go
   tick
   random-walk
-  ;; add-to-board-compatibility-method
 end
 
 to go-500
@@ -265,25 +247,16 @@ to go-500
 end
 
 to update-board-vars
-
   ask boards [
-    ;; type "\nCurr burst  : " print curr_board
 
-    ;; if board is empty (no compatible kus), re-use the previous one
-    ifelse curr_board != [] [
-      ;; add current board to end of history
-      set board_history lput curr_board board_history
-    ] [
-      ;; duplicate last
-      set board_history lput (last board_history) board_history
-      ; show-board-vars
-      print "Curr board is empty"
-    ]
+    ifelse curr_board = [] ; duplicate last board if current is empty
+    [ set board_history lput (last board_history) board_history ] ; duplicate last board
+    [ set board_history lput curr_board board_history ] ; add current board to end of history
 
     foreach divergencies_from_first_ku [ d ->
       if-else d < c_threshold
-      [ set compat_with_init_ctr compat_with_init_ctr + 1]
-      [ set incompat_with_init_ctr incompat_with_init_ctr + 1]
+      [ set compat_with_init_ctr compat_with_init_ctr + 1 ]
+      [ set incompat_with_init_ctr incompat_with_init_ctr + 1 ]
     ]
 
     set ratio 1
@@ -303,20 +276,12 @@ to update-board-vars
       [ set compat_ratio -1 ]
     ]
 
+    ; add to 'history' vars
     set all_compat_ratios lput compat_ratio all_compat_ratios
     set all_divergencies_from_first_ku lput divergencies_from_first_ku all_divergencies_from_first_ku
+    set all_compatibilities lput sort compatibilities all_compatibilities
 
-    ; type "compatibility ratio " print compat_ratio
-
-    ;; reset current list
-    set curr_board []
-
-    ;; type "All bursts  : " print board_history
-
-    ;; curr_agents stores all agents that were compatible with a ku on the board
-    set curr_agents sort remove-duplicates curr_agents
-
-    ;; agents_history stores a list per tick of the compatible agents
+    set curr_agents sort remove-duplicates curr_agents ; sort before adding
     set agents_history lput curr_agents agents_history
 
     set male_participation 0
@@ -331,25 +296,11 @@ to update-board-vars
       ]
     ]
 
-    set all_participations lput (sentence female_participation male_participation) all_participations
-
-    ;; type "Curr agents : " print curr_agents
-    ;; type "All agents  : " print agents_history
-
-    ;; compatibilities
-    set all_compatibilities lput sort compatibilities all_compatibilities
-
-   ; set all_compatibilities lput sort compatibilities all_compatibilities
-
-    ;set all_compatibilities lput sort compatibilities all_compatibilities
-
-
-    ;; type "compats " print all_compatibilities
-
-    set compatibilities []
+    ; reset 'curr' vars
+    set curr_board []
     set curr_agents[]
+    set compatibilities []
   ]
-  ;; show-board-vars
 end
 
 to-report get-agent-from-who [agent_number]
@@ -426,18 +377,6 @@ end
 
 to-report attention-norm-report
   ; if Method = "Attention Norm - Gendered" []
-end
-
-to-report mf-participation-report
-
- let string 0
-
-  ask boards[
-    foreach all_participations [ part ->
-      set string (sentence string part)
-    ]
-  ]
-  report string
 end
 
 to-report get-all-compatibilities
@@ -971,7 +910,7 @@ number_of_agents
 number_of_agents
 1
 33
-15.0
+5.0
 2
 1
 NIL
