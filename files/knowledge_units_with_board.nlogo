@@ -377,10 +377,6 @@ to-report burst-length-report
   report string
 end
 
-to-report attention-norm-report
-  ; if Method = "Attention Norm - Gendered" []
-end
-
 to-report get-all-compatibilities
   let string 0
 
@@ -431,8 +427,8 @@ to random-walk
     ;; change focused ku
     ifelse random-float 1 < [prob_exploit] of agent
     [
-      ; type [gender] of agent type " is exploiting KU " print [focused_ku] of agent
       exploit agent
+
       if-else [gender] of agent = "m" [
         set male_exploit_ctr male_exploit_ctr + 1
       ][
@@ -440,13 +436,9 @@ to random-walk
       ]
     ]
     [
-      ; type " is exploring KU " print [focused_ku] of agent
       explore agent
     ]
   ]
-
-  ; type male_exploit_ctr print " Males Exploiting"
-  ; type female_exploit_ctr print " Females Exploiting"
 
   let gender_counts get-gender-count
   let f first gender_counts
@@ -465,26 +457,9 @@ to random-walk
     ; type "Attention norm is - to " print attention_norm
   ]
 
-  if Method = "Attention Norm - Gendered" [
-    ; type "Trends : Exploit " type precision exploit_trend 2 type " Explore " print precision explore_trend 2
-    set male_exploit_trend (male_exploit_ctr) / (m)
-    if-else male_exploit_trend >= 0.5 ; se a trend for a maiorira
-    [ set male_attention_norm "exploit" ]
-    [ set male_attention_norm "explore" ]
-
-    set female_exploit_trend (female_exploit_ctr) / (f)
-    if-else female_exploit_trend >= 0.5 ; se a trend for a maioria
-    [ set female_attention_norm "exploit" ]
-    [ set female_attention_norm "explore" ]
-
-    ; type "Male Attention norm is - to " print male_attention_norm
-    ; type "Female Attention norm is - to " print female_attention_norm
-  ]
-
   foreach ts [agent ->
     if Method = "Compatibility" [ add-to-board-compatibility-method agent ]
     if Method = "Attention Norm - General" [ add-to-board-attention-norm-method agent ]
-    if Method = "Attention Norm - Gendered" [ add-to-board-attention-norm-gendered-method agent ]
   ]
 
   update-board-vars
@@ -554,60 +529,6 @@ to add-to-board-attention-norm-method [agent]
     if r < chance [
       ;;type "Vai postar , " type precision r 3 print "%"
 
-      ; add focused_ku if not there
-      if not member? [focused_ku] of agent curr_board [
-        ; add compatible ku to current board
-        set curr_board lput [focused_ku] of agent curr_board
-
-        ; add agent to current connected agents
-        set curr_agents lput [who] of agent curr_agents
-
-        ; add compat to list of compatibilities
-        set compatibilities lput compat compatibilities
-
-        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
-      ]
-    ]
-
-    set curr_board remove-duplicates curr_board
-    ;;type "KUs on Board:" print curr_board
-  ]
-end
-
-to add-to-board-attention-norm-gendered-method [agent]
-  ; let posts false
-  let compatible false
-  let compat 0
-  ; type "agent " print [who] of agent
-  ask boards [
-    ; get last board's kus
-    foreach last board_history [ ku_on_board ->
-      if not compatible [
-        ; calc compat focused_ku x ku_on_board
-        set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
-        if compat > c_threshold [
-          set compatible true
-          ; stop ; leave for loop
-        ]
-      ]
-    ]
-    let chance 0.2
-
-    if-else [gender] of agent = "m"[
-      if ((compatible)     and (male_attention_norm = "exploit")) [ set chance 0.8 ]
-      if ((not compatible) and (male_attention_norm = "explore")) [ set chance 0.8 ]
-    ] ; gender f
-    [
-      if ((compatible)     and (female_attention_norm = "exploit")) [ set chance 0.8 ]
-      if ((not compatible) and (female_attention_norm = "explore")) [ set chance 0.8 ]
-    ]
-
-    ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
-    let r random-float 1
-    if r < chance [
-      ;;type "Vai postar , " type precision r 3 print "%"
-
-      ; TODO : is this check necessary ? im already removing duplicate
       ; add focused_ku if not there
       if not member? [focused_ku] of agent curr_board [
         ; add compatible ku to current board
