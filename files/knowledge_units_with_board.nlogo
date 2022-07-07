@@ -103,6 +103,8 @@ to setup-board
     set all_compatibilities []
     set compatibilities []
 
+    set ratio 0.5
+
     create-links-with other agents [
       set thickness 0.4
       if [gender] of [end1] of self = "m" [ set color yellow ]
@@ -150,12 +152,12 @@ to setup-agents
       ; print ( ku_number - length kus ) ; show ku's left
      ]
 
-    print "Bottleneck !!!"
+    ;print "Bottleneck !!!"
     ;; initiate list of links
     set list_of_links []
     set list_of_links set_links self
 
-    print "finished list of links"
+    ;print "finished list of links"
 
     ;; focus on a random KU
     set focused_ku one-of kus
@@ -264,17 +266,17 @@ to update-board-vars
       set ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
     ]
 
-    ; print ratio
+    ;print ratio
 
-    if-else ratio >= 0.45 and ratio <= 0.55
-    [
-      set compat_ratio 0
-    ] ; polarised
-    [
+    ;if-else ratio >= 0.49 and ratio <= 0.51
+    ;[
+    ;  set compat_ratio 0
+    ;] ; polarised
+    ;[
       if-else ratio > 0.5
       [ set compat_ratio 1 ]
       [ set compat_ratio -1 ]
-    ]
+    ;]
 
     ; add to 'history' vars
     set all_compat_ratios lput compat_ratio all_compat_ratios
@@ -492,23 +494,24 @@ to add-to-board-compatibility-method [agent]
 
   ask boards [
     ; get last board's kus
-    foreach last board_history [ ku_on_board ->
-      ; calc compat focused_ku x ku_on_board
-      let compat get-compat-as-decimal [focused_ku] of agent ku_on_board
-      if compat > c_threshold [
-        ; add focused_ku if not there
-        if not member? [focused_ku] of agent curr_board [
-          ; add compatible ku to current board
-          set curr_board lput [focused_ku] of agent curr_board
+    let ku_on_board mean last board_history
+    ;type "Mean  last burst " print ku_on_board
+    ; calc compat focused_ku x ku_on_board
+    let compat get-compat-as-decimal [focused_ku] of agent ku_on_board
 
-          ; add agent to current connected agents
-          set curr_agents lput [who] of agent curr_agents
+    if compat > c_threshold [
+      ; add focused_ku if not there
+      if not member? [focused_ku] of agent curr_board [
+        ; add compatible ku to current board
+        set curr_board lput [focused_ku] of agent curr_board
 
-          ; add compat to list of compatibilities
-          set compatibilities lput compat compatibilities
+        ; add agent to current connected agents
+        set curr_agents lput [who] of agent curr_agents
 
-          set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
-        ]
+        ; add compat to list of compatibilities
+        set compatibilities lput compat compatibilities
+
+        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
       ]
     ]
 
@@ -524,20 +527,27 @@ to add-to-board-attention-norm-method [agent]
   ; type "agent " print [who] of agent
   ask boards [
     ; get last board's kus
-    foreach last board_history [ ku_on_board ->
-      if not compatible [
-        ; calc compat focused_ku x ku_on_board
-        set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
-        if compat > c_threshold [
-          set compatible true
-          ; stop ; leave for loop
-        ]
-      ]
-    ]
-    let chance 0.2
 
-    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.8 ]
-    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.8 ]
+    ;foreach last board_history [ ku_on_board ->
+    ;  if not compatible [
+        ; calc compat focused_ku x ku_on_board
+    ;    set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
+    ;    if compat > c_threshold [
+    ;      set compatible true
+          ; stop ; leave for loop
+    ;    ]
+    ;  ]
+    ;]
+
+    let ku_on_board mean last board_history
+    set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
+
+    let chance 0.35
+
+    if compat > c_threshold [ set compatible true ]
+
+    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.65 ]
+    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.65 ]
 
     ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
     let r random-float 1
@@ -910,7 +920,7 @@ number_of_agents
 number_of_agents
 1
 33
-5.0
+15.0
 2
 1
 NIL
@@ -972,7 +982,7 @@ male_prob_exploit
 male_prob_exploit
 0
 1
-0.35
+0.45
 0.05
 1
 NIL
@@ -987,7 +997,7 @@ female_prob_exploit
 female_prob_exploit
 0
 1
-0.65
+0.45
 0.05
 1
 NIL
@@ -998,7 +1008,7 @@ PLOT
 10
 514
 148
-Average Compatibility of Posted KUs
+Mean Compatibility of Posted KUs
 tick
 compat.
 0.0
@@ -1014,10 +1024,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min last [all_compatibilities] of one-of boards"
 
 PLOT
-513
-444
-837
-572
+535
+608
+859
+736
 M / F Posting
 tick
 gender
@@ -1040,13 +1050,13 @@ CHOOSER
 Method
 Method
 "Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
-2
+1
 
 PLOT
-196
-283
-839
-433
+303
+432
+946
+582
 Attention Norm
 ticks
 Trends
@@ -1084,10 +1094,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min divergencies_from_first_ku"
 
 PLOT
-301
-444
-503
-572
+175
+290
+601
+446
 Burst length
 ticks
 length
@@ -1122,16 +1132,16 @@ PENS
 PLOT
 550
 155
-837
-275
+908
+344
 Pure Compatibilities with First KU
 Tick
 Compatibility with First KU
 0.0
-1.0
-0.0
-1.0
-true
+500.0
+0.3
+0.7
+false
 false
 "" ""
 PENS
