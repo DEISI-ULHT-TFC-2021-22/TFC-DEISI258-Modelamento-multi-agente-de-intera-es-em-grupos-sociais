@@ -929,7 +929,7 @@ PLOT
 10
 514
 148
-Mean Compatibility of Posted KUs
+Compatibility of Posted KUs
 tick
 compat.
 0.0
@@ -937,7 +937,7 @@ compat.
 0.0
 1.0
 true
-true
+false
 "" ""
 PENS
 "mean" 1.0 0 -7500403 true "" "plot mean last [all_compatibilities] of one-of boards"
@@ -945,10 +945,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min last [all_compatibilities] of one-of boards"
 
 PLOT
-535
-608
-859
-736
+7
+587
+331
+715
 M / F Posting
 tick
 gender
@@ -970,14 +970,14 @@ CHOOSER
 569
 Method
 Method
-"Compatibility" "Attention Norm - General" "Attention Norm - Gendered"
+"Compatibility" "Attention Norm - General"
 1
 
 PLOT
-303
-432
-946
-582
+242
+157
+598
+288
 Attention Norm
 ticks
 Trends
@@ -999,7 +999,7 @@ PLOT
 10
 837
 147
-Mean Divergence from Initial KU
+Initial KU Divergence
 ticks
 hamming
 0.0
@@ -1007,7 +1007,7 @@ hamming
 0.0
 1.0
 true
-true
+false
 "" ""
 PENS
 "mean" 1.0 0 -9276814 true "" "plot mean divergencies_from_first_ku"
@@ -1015,10 +1015,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min divergencies_from_first_ku"
 
 PLOT
-175
-290
-601
-446
+302
+447
+826
+568
 Burst length
 ticks
 length
@@ -1033,10 +1033,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot length last [board_history] of one-of boards"
 
 PLOT
-243
-154
-542
-274
+199
+301
+592
+421
 Topic Divergence
 ticks
 compat
@@ -1051,17 +1051,17 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot compat_ratio"
 
 PLOT
-550
-155
-908
-344
+605
+156
+837
+435
 Pure Compatibilities with First KU
 Tick
 Compatibility with First KU
 0.0
 500.0
 0.3
-0.7
+0.6
 false
 false
 "" ""
