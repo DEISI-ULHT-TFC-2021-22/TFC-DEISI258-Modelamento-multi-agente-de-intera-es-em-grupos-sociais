@@ -444,7 +444,7 @@ to random-walk
   let f first gender_counts
   let m last gender_counts
 
-  if Method = "Attention Norm - General" [
+  if Method = "Attention Norm - General" or Method = "Attention Norm - General Fix" [
     ; sum agents exploiting / sum all agents
     set exploit_trend (male_exploit_ctr + female_exploit_ctr) / (f + m)
 
@@ -460,6 +460,7 @@ to random-walk
   foreach ts [agent ->
     if Method = "Compatibility" [ add-to-board-compatibility-method agent ]
     if Method = "Attention Norm - General" [ add-to-board-attention-norm-method agent ]
+    if Method = "Attention Norm - General Fix" [ add-to-board-attention-norm-method-fix agent ]
   ]
 
   update-board-vars
@@ -475,17 +476,47 @@ to add-to-board-compatibility-method [agent]
     let compat get-compat-as-decimal [focused_ku] of agent ku_on_board
 
     if compat > c_threshold [
-      ; add focused_ku if not there
       if not member? [focused_ku] of agent curr_board [
-        ; add compatible ku to current board
         set curr_board lput [focused_ku] of agent curr_board
-
-        ; add agent to current connected agents
         set curr_agents lput [who] of agent curr_agents
-
-        ; add compat to list of compatibilities
         set compatibilities lput compat compatibilities
+        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
+      ]
+    ]
 
+    set curr_board remove-duplicates curr_board
+    ;;type "KUs on Board:" print curr_board
+  ]
+end
+
+to add-to-board-attention-norm-method-fix [agent]
+  ; let posts false
+  let compatible false
+  let compat 0
+  ; type "agent " print [who] of agent
+  ask boards [
+    let compat_list []
+
+    foreach last board_history [ ku_on_board ->
+      set compat_list lput ( get-compat-as-decimal [focused_ku] of agent ku_on_board ) compat_list
+    ]
+
+    set compat median compat_list ; median dá sort automaticamente
+    ; print compat
+    if compat > c_threshold [ set compatible true ]
+
+    let chance 0.35
+
+    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.65 ]
+    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.65 ]
+
+    ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
+    let r random-float 1
+    if r < chance [
+      if not member? [focused_ku] of agent curr_board [
+        set curr_board lput [focused_ku] of agent curr_board
+        set curr_agents lput [who] of agent curr_agents
+        set compatibilities lput compat compatibilities
         set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
       ]
     ]
@@ -501,19 +532,6 @@ to add-to-board-attention-norm-method [agent]
   let compat 0
   ; type "agent " print [who] of agent
   ask boards [
-    ; get last board's kus
-
-    ;foreach last board_history [ ku_on_board ->
-    ;  if not compatible [
-        ; calc compat focused_ku x ku_on_board
-    ;    set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
-    ;    if compat > c_threshold [
-    ;      set compatible true
-          ; stop ; leave for loop
-    ;    ]
-    ;  ]
-    ;]
-
     let ku_on_board mean last board_history
     set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
 
@@ -527,19 +545,10 @@ to add-to-board-attention-norm-method [agent]
     ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
     let r random-float 1
     if r < chance [
-      ;;type "Vai postar , " type precision r 3 print "%"
-
-      ; add focused_ku if not there
       if not member? [focused_ku] of agent curr_board [
-        ; add compatible ku to current board
         set curr_board lput [focused_ku] of agent curr_board
-
-        ; add agent to current connected agents
         set curr_agents lput [who] of agent curr_agents
-
-        ; add compat to list of compatibilities
         set compatibilities lput compat compatibilities
-
         set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
       ]
     ]
@@ -720,7 +729,7 @@ to-report get-compat-as-decimal [ dec1 dec2 ]
   report 1 - (normalized-hamming-distance decimal-to-binary dec1 decimal-to-binary dec2)
 end
 
-
+; Profiler -> https://simulatingcomplexity.wordpress.com/2015/03/23/netlogo-profiler/
 ;; insert-item pos list item
 ;; lput item list (insert in last)
 ;; item pos list
@@ -865,10 +874,10 @@ NIL
 1
 
 SLIDER
-7
-486
-99
-519
+8
+480
+100
+513
 males
 males
 0
@@ -880,10 +889,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-446
-99
-479
+8
+440
+100
+473
 females
 females
 0
@@ -895,10 +904,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-106
-486
-288
-519
+107
+480
+289
+513
 male_prob_exploit
 male_prob_exploit
 0
@@ -910,10 +919,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-107
-446
-287
-479
+108
+440
+288
+473
 female_prob_exploit
 female_prob_exploit
 0
@@ -964,14 +973,14 @@ PENS
 "female" 1.0 0 -955883 true "" "plot [female_participation] of one-of boards"
 
 CHOOSER
-8
-524
-288
-569
+9
+518
+289
+563
 Method
 Method
-"Compatibility" "Attention Norm - General"
-1
+"Compatibility" "Attention Norm - General" "Attention Norm - General Fix"
+2
 
 PLOT
 242
@@ -1015,10 +1024,10 @@ PENS
 "min" 1.0 2 -2674135 true "" "plot min divergencies_from_first_ku"
 
 PLOT
-302
-447
-826
-568
+303
+441
+841
+562
 Burst length
 ticks
 length
@@ -1054,13 +1063,13 @@ PLOT
 605
 156
 837
-435
-Pure Compatibilities with First KU
+421
+% Compatible w/ First KU
 Tick
 Compatibility with First KU
 0.0
 500.0
-0.3
+0.35
 0.6
 false
 false
