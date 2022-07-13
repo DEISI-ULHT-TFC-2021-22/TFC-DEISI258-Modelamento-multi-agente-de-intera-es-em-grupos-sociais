@@ -444,7 +444,7 @@ to random-walk
   let f first gender_counts
   let m last gender_counts
 
-  if Method = "Attention Norm - General" or Method = "Attention Norm - General Fix" [
+  if Method = "Attention Norm" [
     ; sum agents exploiting / sum all agents
     set exploit_trend (male_exploit_ctr + female_exploit_ctr) / (f + m)
 
@@ -459,8 +459,7 @@ to random-walk
 
   foreach ts [agent ->
     if Method = "Compatibility" [ add-to-board-compatibility-method agent ]
-    if Method = "Attention Norm - General" [ add-to-board-attention-norm-method agent ]
-    if Method = "Attention Norm - General Fix" [ add-to-board-attention-norm-method-fix agent ]
+    if Method = "Attention Norm" [ add-to-board-attention-norm-method-fix agent ]
   ]
 
   update-board-vars
@@ -506,38 +505,6 @@ to add-to-board-attention-norm-method-fix [agent]
     if compat > c_threshold [ set compatible true ]
 
     let chance ( 1 - posting_chance )
-
-    if ((compatible)     and (attention_norm = "exploit")) [ set chance posting_chance ]
-    if ((not compatible) and (attention_norm = "explore")) [ set chance posting_chance ]
-
-    ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
-    let r random-float 1
-    if r < chance [
-      if not member? [focused_ku] of agent curr_board [
-        set curr_board lput [focused_ku] of agent curr_board
-        set curr_agents lput [who] of agent curr_agents
-        set compatibilities lput compat compatibilities
-        set divergencies_from_first_ku lput (1 - get-compat-as-decimal [focused_ku] of agent first_ku) divergencies_from_first_ku
-      ]
-    ]
-
-    set curr_board remove-duplicates curr_board
-    ;;type "KUs on Board:" print curr_board
-  ]
-end
-
-to add-to-board-attention-norm-method [agent]
-  ; let posts false
-  let compatible false
-  let compat 0
-  ; type "agent " print [who] of agent
-  ask boards [
-    let ku_on_board mean last board_history
-    set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
-
-    let chance ( 1 - posting_chance )
-
-    if compat > c_threshold [ set compatible true ]
 
     if ((compatible)     and (attention_norm = "exploit")) [ set chance posting_chance ]
     if ((not compatible) and (attention_norm = "explore")) [ set chance posting_chance ]
@@ -979,8 +946,8 @@ CHOOSER
 563
 Method
 Method
-"Compatibility" "Attention Norm - General" "Attention Norm - General Fix"
-2
+"Compatibility" "Attention Norm"
+0
 
 PLOT
 242
