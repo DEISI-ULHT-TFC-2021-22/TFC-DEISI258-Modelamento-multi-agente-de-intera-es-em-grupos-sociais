@@ -505,10 +505,10 @@ to add-to-board-attention-norm-method-fix [agent]
     ; print compat
     if compat > c_threshold [ set compatible true ]
 
-    let chance 0.35
+    let chance ( 1 - posting_chance )
 
-    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.65 ]
-    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.65 ]
+    if ((compatible)     and (attention_norm = "exploit")) [ set chance posting_chance ]
+    if ((not compatible) and (attention_norm = "explore")) [ set chance posting_chance ]
 
     ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
     let r random-float 1
@@ -535,12 +535,12 @@ to add-to-board-attention-norm-method [agent]
     let ku_on_board mean last board_history
     set compat get-compat-as-decimal [focused_ku] of agent ku_on_board
 
-    let chance 0.35
+    let chance ( 1 - posting_chance )
 
     if compat > c_threshold [ set compatible true ]
 
-    if ((compatible)     and (attention_norm = "exploit")) [ set chance 0.65 ]
-    if ((not compatible) and (attention_norm = "explore")) [ set chance 0.65 ]
+    if ((compatible)     and (attention_norm = "exploit")) [ set chance posting_chance ]
+    if ((not compatible) and (attention_norm = "explore")) [ set chance posting_chance ]
 
     ;; type attention_norm type " ; compat - " type compat type " : " type chance print "%"
     let r random-float 1
@@ -1076,6 +1076,21 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot [ratio] of one-of boards"
+
+SLIDER
+377
+586
+552
+619
+posting_chance
+posting_chance
+0
+1
+0.8
+0.05
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
