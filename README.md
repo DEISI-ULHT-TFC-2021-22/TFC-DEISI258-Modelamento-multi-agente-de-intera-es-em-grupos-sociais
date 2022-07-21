@@ -11,7 +11,7 @@ Foram desenvolvidas duas componentes principais neste projeto:
 
 ## Demonstração Video
 
-[![Demonstração](files/video_cover.png)](https://youtu.be/0aawaW1K_t8)
+[![Demonstração](files/thumbnail.jpg)](https://youtu.be/Kxuzy2PXCTc)
 
 ## Instruções de utilização
 
