@@ -251,9 +251,15 @@ end
 to update-board-vars
   ask boards [
 
+    ;print divergencies_from_first_ku
+
     ifelse curr_board = [] ; duplicate last board if current is empty
     [ set board_history lput (last board_history) board_history ] ; duplicate last board
     [ set board_history lput curr_board board_history ] ; add current board to end of history
+
+    ; RESET VARS - this wasn't resetting...
+    set compat_with_init_ctr 0
+    set incompat_with_init_ctr 0
 
     foreach divergencies_from_first_ku [ d ->
       if-else d < c_threshold
@@ -261,12 +267,13 @@ to update-board-vars
       [ set incompat_with_init_ctr incompat_with_init_ctr + 1 ]
     ]
 
+    ; type "CTR COMPAT   - " print compat_with_init_ctr
+    ; type "CTR INCOMPAT - " print incompat_with_init_ctr
+
     set ratio 1
     if (compat_with_init_ctr + incompat_with_init_ctr) != 0 [ ; prevent division by zero
       set ratio precision (compat_with_init_ctr / (compat_with_init_ctr + incompat_with_init_ctr)) 2
     ]
-
-    ;print ratio
 
     ;if-else ratio >= 0.49 and ratio <= 0.51
     ;[
@@ -879,7 +886,7 @@ male_prob_exploit
 male_prob_exploit
 0
 1
-0.45
+0.6
 0.05
 1
 NIL
@@ -894,7 +901,7 @@ female_prob_exploit
 female_prob_exploit
 0
 1
-0.45
+0.6
 0.05
 1
 NIL
@@ -947,7 +954,7 @@ CHOOSER
 Method
 Method
 "Compatibility" "Attention Norm"
-0
+1
 
 PLOT
 242
@@ -1037,7 +1044,7 @@ Compatibility with First KU
 0.0
 500.0
 0.35
-0.6
+0.8
 false
 false
 "" ""
