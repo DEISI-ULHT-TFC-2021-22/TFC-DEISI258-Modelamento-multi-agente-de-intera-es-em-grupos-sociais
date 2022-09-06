@@ -1,0 +1,5 @@
+Mensagens Compatíveis | Incompatíveis => [ 1879.0 | 350.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 1818.0 | 412.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 1533.0 | 691.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 1872.0 | 358.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 1917.0 | 324.0 ]

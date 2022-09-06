@@ -1,0 +1,5 @@
+Mensagens Compatíveis | Incompatíveis => [ 715.0 | 1514.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 758.0 | 1542.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 713.0 | 1461.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 743.0 | 1483.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 684.0 | 1554.0 ]

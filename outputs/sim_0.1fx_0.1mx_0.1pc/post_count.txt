@@ -1,0 +1,5 @@
+Mensagens Compatíveis | Incompatíveis => [ 563.0 | 1103.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 549.0 | 1115.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 584.0 | 1089.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 512.0 | 1152.0 ]
+Mensagens Compatíveis | Incompatíveis => [ 536.0 | 1138.0 ]
