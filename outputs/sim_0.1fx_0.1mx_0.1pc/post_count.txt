@@ -1,5 +1,20 @@
-Mensagens Compatíveis | Incompatíveis => [ 563.0 | 1103.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 549.0 | 1115.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 584.0 | 1089.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 512.0 | 1152.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 536.0 | 1138.0 ]
+Compatíveis   359  |  745   Incompatíveis
+Compatíveis   375  |  738   Incompatíveis
+Compatíveis   390  |  701   Incompatíveis
+Compatíveis   382  |  695   Incompatíveis
+Compatíveis   435  |  688   Incompatíveis
+Compatíveis   382  |  733   Incompatíveis
+Compatíveis   365  |  721   Incompatíveis
+Compatíveis   332  |  764   Incompatíveis
+Compatíveis   421  |  739   Incompatíveis
+Compatíveis   380  |  698   Incompatíveis
+Compatíveis   374  |  729   Incompatíveis
+Compatíveis   363  |  784   Incompatíveis
+Compatíveis   347  |  767   Incompatíveis
+Compatíveis   405  |  714   Incompatíveis
+Compatíveis   392  |  733   Incompatíveis
+Compatíveis   378  |  711   Incompatíveis
+Compatíveis   354  |  786   Incompatíveis
+Compatíveis   369  |  757   Incompatíveis
+Compatíveis   412  |  693   Incompatíveis
+Compatíveis   374  |  714   Incompatíveis

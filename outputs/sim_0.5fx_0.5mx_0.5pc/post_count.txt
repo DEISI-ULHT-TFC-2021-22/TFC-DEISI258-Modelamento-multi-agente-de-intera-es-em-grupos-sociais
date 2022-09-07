@@ -1,5 +1,20 @@
-Mensagens Compatíveis | Incompatíveis => [ 1187.0 | 1119.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 1206.0 | 1044.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 1237.0 | 997.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 1247.0 | 1019.0 ]
-Mensagens Compatíveis | Incompatíveis => [ 1219.0 | 1049.0 ]
+Compatíveis   776  |  715   Incompatíveis
+Compatíveis   698  |  780   Incompatíveis
+Compatíveis   784  |  729   Incompatíveis
+Compatíveis   787  |  735   Incompatíveis
+Compatíveis   786  |  713   Incompatíveis
+Compatíveis   717  |  719   Incompatíveis
+Compatíveis   845  |  673   Incompatíveis
+Compatíveis   790  |  705   Incompatíveis
+Compatíveis   757  |  765   Incompatíveis
+Compatíveis   762  |  675   Incompatíveis
+Compatíveis   857  |  684   Incompatíveis
+Compatíveis   823  |  708   Incompatíveis
+Compatíveis   760  |  771   Incompatíveis
+Compatíveis   755  |  713   Incompatíveis
+Compatíveis   827  |  660   Incompatíveis
+Compatíveis   805  |  719   Incompatíveis
+Compatíveis   814  |  697   Incompatíveis
+Compatíveis   796  |  720   Incompatíveis
+Compatíveis   765  |  696   Incompatíveis
+Compatíveis   769  |  677   Incompatíveis
